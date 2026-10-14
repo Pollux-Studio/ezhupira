@@ -1,0 +1,17 @@
+import * as React from "react"
+import { cn } from "@/lib/utils"
+
+function Kbd({ className, ...props }: React.ComponentProps<"kbd">) {
+  return (
+    <kbd
+      data-slot="kbd"
+      className={cn(
+        "inline-flex h-5 min-w-5 items-center justify-center rounded-md border border-white/18 bg-black/20 px-1.5 font-mono text-[10px] font-semibold text-white",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+export { Kbd }
