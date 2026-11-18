@@ -5,8 +5,10 @@ import "./globals.css";
 import { cn } from "@/lib/utils";
 import { SignaturePreloader } from "@/components/signature-preloader";
 import { StretchyFooter } from "@/components/ui/stretchy-footer";
+import { Analytics } from "@vercel/analytics/next";
 import { ThemeProvider } from "@/components/theme-provider";
 import { JsonLd } from "@/components/json-ld";
+import { SessionProvider } from "@/components/auth/session";
 import { AUTHOR, SITE, SITE_URL, organizationLd, personLd, websiteLd } from "@/lib/site";
 
 // Fonts used by the paper theme.
@@ -105,13 +107,16 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           <style>{`.signature-preloader{display:none!important}`}</style>
         </noscript>
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
-          <SignaturePreloader />
-          {/* The page lifts on a spring when you scroll past the bottom (StretchyFooter). */}
-          <div data-stretchy-page className="flex flex-1 flex-col overflow-x-clip">
-            {children}
-          </div>
-          <StretchyFooter windowScroll />
+          <SessionProvider>
+            <SignaturePreloader />
+            {/* The page lifts on a spring when you scroll past the bottom (StretchyFooter). */}
+            <div data-stretchy-page className="flex flex-1 flex-col overflow-x-clip">
+              {children}
+            </div>
+            <StretchyFooter windowScroll />
+          </SessionProvider>
         </ThemeProvider>
+        <Analytics />
       </body>
     </html>
   );

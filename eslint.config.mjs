@@ -5,6 +5,8 @@ import nextTs from "eslint-config-next/typescript";
 const eslintConfig = defineConfig([
   ...nextVitals,
   ...nextTs,
+  // OG image components render through Satori (next/og), which needs plain <img>.
+  { files: ["components/og/**"], rules: { "@next/next/no-img-element": "off" } },
   // Override default ignores of eslint-config-next.
   globalIgnores([
     // Default ignores of eslint-config-next:
@@ -12,6 +14,7 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "turnjs4/**",
+    "server/**",
     "next-env.d.ts",
   ]),
 ]);

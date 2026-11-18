@@ -2,10 +2,11 @@ import Image from "next/image";
 import Link from "next/link";
 import { HandThemeToggle } from "@/components/hand-toggle";
 import { LanguageSwitch } from "@/components/language-switch";
-import { buttonVariants } from "@/components/ui/button";
+import { HeaderAccount } from "@/components/header-account";
 
 /**
- * Sticky full-width header: logo pinned left; Login, language and theme switches pinned right.
+ * Sticky full-width header: logo pinned left; account (Login, or avatar + name), language and
+ * theme switches pinned right.
  * (About the author and Track order live in the footer.)
  */
 export function SiteHeader() {
@@ -23,9 +24,7 @@ export function SiteHeader() {
         </Link>
 
         <nav aria-label="Main" className="flex items-center gap-1 sm:gap-2">
-          <Link href="/login" className={buttonVariants({ size: "lg" })}>
-            Login
-          </Link>
+          <HeaderAccount />
           <LanguageSwitch />
           <HandThemeToggle />
         </nav>

@@ -263,6 +263,7 @@ export default async function BookPage({ params }: PageProps<"/books/[slug]">) {
                 </section>
 
                 <ReviewSection
+                  bookSlug={book.slug}
                   bookTitle={book.title}
                   bookTitleMallikai={book.titleMallikai}
                 />

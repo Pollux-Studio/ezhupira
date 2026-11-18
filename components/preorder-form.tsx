@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -13,60 +13,77 @@ import {
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { editions, formatPrice, type Edition } from "@/lib/preorder";
+import { api, type Catalog, type CatalogEdition, type CheckoutSession, type User } from "@/lib/api";
+import { openCheckout } from "@/lib/checkout";
+import { editions as editionCopy, formatPrice } from "@/lib/preorder";
 
-export function PreorderForm({ bookTitle }: { bookTitle: string }) {
-  const [editionId, setEditionId] = useState<Edition["id"]>("hardcopy");
-  const [submitted, setSubmitted] = useState(false);
-  const edition = editions.find((e) => e.id === editionId) ?? editions[0];
+const describe = (id: CatalogEdition["id"]) => editionCopy.find((e) => e.id === id)?.description ?? "";
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+/** Pre-order form. Editions and prices come from the API (it decides what's charged). */
+export function PreorderForm({ user }: { user: User }) {
+  const [catalog, setCatalog] = useState<Catalog | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [editionId, setEditionId] = useState<CatalogEdition["id"]>("hardcopy");
+  const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    api<Catalog>("/catalog").then(setCatalog, (err: Error) => setLoadError(err.message));
+  }, []);
+
+  if (loadError) return <p className="text-sm text-destructive">{loadError}</p>;
+  if (!catalog) return <div className="h-80 animate-pulse rounded-lg bg-muted" aria-label="Loading" />;
+
+  const book = catalog.books.find((b) => b.onSale) ?? catalog.books[0];
+  if (!book) return <p className="text-muted-foreground">No book is open for pre-order right now.</p>;
+  const open = book.onSale && book.editions.some((e) => e.price > 0);
+  const edition = book.editions.find((e) => e.id === editionId) ?? book.editions[0];
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    // TODO: create the order on the server and hand off to the payment provider.
-    setSubmitted(true);
-  }
-
-  if (submitted) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Pre-order received</CardTitle>
-          <CardDescription>
-            {bookTitle} · {edition.name}. Payments aren&apos;t connected yet, so no money has been
-            taken.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Button variant="outline" onClick={() => setSubmitted(false)}>
-            Make another pre-order
-          </Button>
-        </CardContent>
-      </Card>
-    );
+    const f = new FormData(event.currentTarget);
+    const get = (k: string) => String(f.get(k) ?? "").trim();
+    setError(null);
+    setSubmitting(true);
+    try {
+      const session = await api<CheckoutSession>("/orders", {
+        body: {
+          bookSlug: book.slug,
+          editionId: edition.id,
+          name: get("name"),
+          phone: get("phone"),
+          address: edition.needsAddress
+            ? { line1: get("line1"), line2: get("line2") || undefined, city: get("city"), state: get("state"), pincode: get("pincode") }
+            : undefined,
+        },
+      });
+      await openCheckout(session); // leaves the page; Cashfree returns to /orders/<code>
+    } catch (err) {
+      setError((err as Error).message);
+      setSubmitting(false);
+    }
   }
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Pre-order {bookTitle}</CardTitle>
-        <CardDescription>Choose an edition and tell us where to send it.</CardDescription>
+        <CardTitle>Pre-order {book.title}</CardTitle>
+        <CardDescription>
+          {open ? "Choose an edition and tell us where to send it." : "Pre-orders open soon. Prices will be announced here."}
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit}>
           <FieldGroup>
-            <RadioGroup
-              value={editionId}
-              onValueChange={(value) => setEditionId(value as Edition["id"])}
-              aria-label="Edition"
-            >
-              {editions.map((e) => (
+            <RadioGroup value={edition.id} onValueChange={(v) => setEditionId(v as CatalogEdition["id"])} aria-label="Edition">
+              {book.editions.map((e) => (
                 <FieldLabel key={e.id} htmlFor={`edition-${e.id}`}>
                   <Field orientation="horizontal">
                     <FieldContent>
                       <FieldTitle>
                         {e.name} · {formatPrice(e.price)}
                       </FieldTitle>
-                      <FieldDescription>{e.description}</FieldDescription>
+                      <FieldDescription>{describe(e.id)}</FieldDescription>
                     </FieldContent>
                     <RadioGroupItem value={e.id} id={`edition-${e.id}`} />
                   </Field>
@@ -76,20 +93,49 @@ export function PreorderForm({ bookTitle }: { bookTitle: string }) {
 
             <Field>
               <FieldLabel htmlFor="name">Full name</FieldLabel>
-              <Input id="name" name="name" autoComplete="name" required />
+              <Input id="name" name="name" autoComplete="name" defaultValue={user.name} minLength={3} required />
             </Field>
             <Field>
-              <FieldLabel htmlFor="phone">Phone</FieldLabel>
-              <Input id="phone" name="phone" type="tel" autoComplete="tel" required />
+              <FieldLabel htmlFor="phone">Mobile number</FieldLabel>
+              <Input id="phone" name="phone" type="tel" inputMode="numeric" autoComplete="tel" placeholder="98765 43210" required />
+              <FieldDescription>For delivery updates. Receipts go to {user.email}.</FieldDescription>
             </Field>
+
             {edition.needsAddress && (
-              <Field>
-                <FieldLabel htmlFor="address">Shipping address</FieldLabel>
-                <Input id="address" name="address" autoComplete="street-address" required />
-              </Field>
+              <>
+                <Field>
+                  <FieldLabel htmlFor="line1">Address</FieldLabel>
+                  <Input id="line1" name="line1" autoComplete="address-line1" placeholder="House no., street" required />
+                  <Input id="line2" name="line2" autoComplete="address-line2" placeholder="Area, landmark (optional)" aria-label="Address line 2" />
+                </Field>
+                <div className="grid gap-4 sm:grid-cols-3">
+                  <Field>
+                    <FieldLabel htmlFor="city">City</FieldLabel>
+                    <Input id="city" name="city" autoComplete="address-level2" required />
+                  </Field>
+                  <Field>
+                    <FieldLabel htmlFor="state">State</FieldLabel>
+                    <Input id="state" name="state" autoComplete="address-level1" defaultValue="Tamil Nadu" required />
+                  </Field>
+                  <Field>
+                    <FieldLabel htmlFor="pincode">PIN code</FieldLabel>
+                    <Input id="pincode" name="pincode" inputMode="numeric" autoComplete="postal-code" pattern="[1-9][0-9]{5}" maxLength={6} required />
+                  </Field>
+                </div>
+              </>
             )}
 
-            <Button type="submit">Place pre-order</Button>
+            {error && (
+              <p role="alert" className="text-sm text-destructive">
+                {error}
+              </p>
+            )}
+            <Button type="submit" disabled={!open || submitting}>
+              {submitting ? "Opening payment…" : open ? `Pay ${formatPrice(edition.price)}` : "Pre-orders open soon"}
+            </Button>
+            {catalog.cashfreeMode === "sandbox" && open && (
+              <FieldDescription className="text-center">Test mode: no real money is charged.</FieldDescription>
+            )}
           </FieldGroup>
         </form>
       </CardContent>

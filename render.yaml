@@ -1,0 +1,47 @@
+# Render Blueprint for the API server (server/). Render → New → Blueprint → pick this repo.
+services:
+  - type: web
+    name: ezhupira-api
+    runtime: node
+    rootDir: server
+    region: singapore
+    plan: free
+    # NODE_ENV=development for the install step so TypeScript (a devDependency) is installed.
+    buildCommand: corepack enable && NODE_ENV=development pnpm install --frozen-lockfile --ignore-workspace && pnpm build
+    startCommand: node dist/index.js
+    healthCheckPath: /health
+    autoDeploy: true
+    buildFilter:
+      paths:
+        - server/**
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: SITE_URL
+        value: https://ezhupira.in
+      - key: PUBLIC_URL
+        value: https://api.ezhupira.in
+      - key: COOKIE_DOMAIN
+        value: .ezhupira.in
+      - key: CASHFREE_ENV
+        value: sandbox
+      - key: KEEP_ALIVE_MINUTES
+        value: "10"
+      - key: MAIL_FROM
+        value: Ezhupira <orders@ezhupira.in>
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: MONGODB_URI
+        sync: false
+      - key: FIREBASE_PROJECT_ID
+        value: ezhupira
+      - key: ADMIN_EMAILS
+        sync: false
+      - key: CASHFREE_APP_ID
+        sync: false
+      - key: CASHFREE_SECRET_KEY
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: MAIL_ADMIN
+        sync: false

@@ -1,77 +1,54 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-import type { ComponentProps, FormEvent } from "react"
+import { useCallback, useEffect, type ComponentProps } from "react"
 import { cn } from "cn"
 
-import { Button } from "@/components/ui/button"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
-import {
-  Field,
-  FieldDescription,
-  FieldGroup,
-  FieldLabel,
-} from "@/components/ui/field"
-import { Input } from "@/components/ui/input"
+import { GoogleSignIn } from "@/components/auth/google-sign-in"
+import { useSession } from "@/components/auth/session"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { FieldDescription } from "@/components/ui/field"
 
-export function LoginForm({ className, ...props }: ComponentProps<"div">) {
+/** Where to go after signing in: ?next=/some/path (same-site paths only), else the dashboard. */
+function nextPath() {
+  const next = new URLSearchParams(window.location.search).get("next")
+  return next && next.startsWith("/") && !next.startsWith("//") ? next : "/dashboard"
+}
+
+function LoginCard() {
   const router = useRouter()
+  const { user } = useSession()
+  const goNext = useCallback(() => router.replace(nextPath()), [router])
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    // TODO: authenticate with the real auth provider before redirecting.
-    router.push("/dashboard")
-  }
+  // Already signed in: skip the login screen.
+  useEffect(() => {
+    if (user) goNext()
+  }, [user, goNext])
 
   return (
+    <Card>
+      <CardHeader className="text-center">
+        <CardTitle>Sign in to pre-order</CardTitle>
+        <CardDescription>Use your Google account to reserve your copy and track your orders.</CardDescription>
+      </CardHeader>
+      <CardContent className="grid gap-4">
+        {user === undefined ? (
+          <div className="h-11 animate-pulse rounded-md bg-muted" aria-label="Loading" />
+        ) : (
+          <GoogleSignIn onSignedIn={goNext} />
+        )}
+        <FieldDescription className="text-center">
+          New here? Signing in creates your account. We only use your name and email for your orders.
+        </FieldDescription>
+      </CardContent>
+    </Card>
+  )
+}
+
+export function LoginForm({ className, ...props }: ComponentProps<"div">) {
+  return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
-      <Card>
-        <CardHeader>
-          <CardTitle>Login to pre-order</CardTitle>
-          <CardDescription>
-            Enter your email to reserve your copy of the next book.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit}>
-            <FieldGroup>
-              <Field>
-                <FieldLabel htmlFor="email">Email</FieldLabel>
-                <Input
-                  id="email"
-                  name="email"
-                  type="email"
-                  placeholder="you@example.com"
-                  autoComplete="email"
-                  required
-                />
-              </Field>
-              <Field>
-                <FieldLabel htmlFor="password">Password</FieldLabel>
-                <Input
-                  id="password"
-                  name="password"
-                  type="password"
-                  autoComplete="current-password"
-                  required
-                />
-              </Field>
-              <Field>
-                <Button type="submit">Login</Button>
-                <FieldDescription className="text-center">
-                  New here? Logging in creates your account.
-                </FieldDescription>
-              </Field>
-            </FieldGroup>
-          </form>
-        </CardContent>
-      </Card>
+      <LoginCard />
     </div>
   )
 }
