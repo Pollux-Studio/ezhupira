@@ -1710,11 +1710,11 @@ export function TamilTypeGarden() {
         <div className="flex flex-wrap items-center gap-4 rounded-full border border-white/14 bg-black/45 px-4 py-2 text-white backdrop-blur-md">
           <span>Type Mallikai keys → Tamil glyphs</span>
           <span className="inline-flex items-center gap-1.5">
-            <Kbd>Space</Kbd>
+            <Kbd className="border border-white/18 bg-black/20 font-mono text-white">Space</Kbd>
             new garden
           </span>
           <span className="inline-flex items-center gap-1.5">
-            <Kbd>Enter</Kbd>
+            <Kbd className="border border-white/18 bg-black/20 font-mono text-white">Enter</Kbd>
             clear all
           </span>
         </div>

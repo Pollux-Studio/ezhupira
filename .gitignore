@@ -39,3 +39,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Full book PDFs: private. Only rendered preview pages (public/previews/) are served.
+/content/books/*.pdf
