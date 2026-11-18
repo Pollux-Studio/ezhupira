@@ -1,31 +1,32 @@
 import { ImageResponse } from "next/og";
-import { Product } from "@/components/og/product";
-import { books } from "@/lib/books";
-import { Mallikai, OG_SIZE, OgBrand, ogFonts, publicDataUri } from "@/lib/og";
+import { Logo } from "@/components/og/logo";
+import { Mallikai, OG_SIZE, ogFonts, publicDataUri } from "@/lib/og";
 
 export const alt = "Ezhupira (எழுபிர) · Tamil books & poetry by Prasanth J";
 export const size = OG_SIZE;
 export const contentType = "image/png";
 
+// Site-wide card: the brand logo, not a book. Book pages have their own card with the cover.
 export default async function Image() {
-  const cover = books.find((b) => b.status === "published" && b.cover)?.cover;
+  const [logo, fonts] = await Promise.all([publicDataUri("/icon-512.png"), ogFonts()]);
   return new ImageResponse(
     (
-      <Product
-        brand={<OgBrand />}
-        logo={await publicDataUri("/icon-192.png")}
-        title={
-          <span style={{ display: "flex", flexDirection: "column" }}>
-            <span>Tamil books &amp; poetry</span>
-            <Mallikai>gpurhe;j;.n[</Mallikai>
-          </span>
+      <Logo
+        logo={logo}
+        brand={
+          <>
+            {/* Separate flex items with explicit margins: Satori ignores gap here. */}
+            <span style={{ display: "flex" }}>
+              <Mallikai>vOgpu</Mallikai>
+            </span>
+            <span style={{ color: "#D51C39", display: "flex", margin: "0 28px" }}>·</span>
+            <span style={{ display: "flex" }}>Ezhupira</span>
+          </>
         }
-        titleSize={68}
-        description="Read previews, pre-order new releases and buy Tamil poetry by Prasanth J."
+        tagline="Tamil books & poetry by Prasanth J"
         footer="ezhupira.in"
-        image={cover ? await publicDataUri(cover) : undefined}
       />
     ),
-    { ...size, fonts: await ogFonts() },
+    { ...size, fonts },
   );
 }

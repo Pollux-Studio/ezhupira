@@ -38,7 +38,7 @@ export function OgBrand() {
   return (
     <span style={{ alignItems: "center", display: "flex", gap: "14px" }}>
       <Mallikai>vOgpu</Mallikai>
-      <span>· Ezhupira</span>
+      <span style={{ display: "flex", margin: "0 0 0 4px" }}>· Ezhupira</span>
     </span>
   );
 }
