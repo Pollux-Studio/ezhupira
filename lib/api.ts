@@ -1,7 +1,14 @@
 // Client for the Ezhupira API server (server/, deployed on Render).
 // The session lives in an httpOnly cookie on .ezhupira.in, so every call sends credentials.
 
-export const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000").replace(/\/$/, "");
+/**
+ * The API: https://api.ezhupira.in in production builds, the local server in development.
+ * NEXT_PUBLIC_API_URL overrides both (e.g. a staging API for a Vercel preview).
+ */
+export const API_URL = (
+  process.env.NEXT_PUBLIC_API_URL ||
+  (process.env.NODE_ENV === "production" ? "https://api.ezhupira.in" : "http://localhost:4000")
+).replace(/\/$/, "");
 
 export class ApiError extends Error {
   constructor(

@@ -76,7 +76,8 @@ Admins are the emails in `ADMIN_EMAILS`.
 5. **Render**: New → Blueprint → this repo (uses `render.yaml`). Fill in the secret env vars.
    Add the custom domain `api.ezhupira.in` and create the CNAME it shows in your DNS.
    The session cookie only works across the site and API when both are on `ezhupira.in`.
-6. **Vercel**: set `NEXT_PUBLIC_API_URL=https://api.ezhupira.in`, then redeploy.
+6. **Vercel**: nothing to set. Production builds call `https://api.ezhupira.in` by default
+   (`lib/api.ts`); set `NEXT_PUBLIC_API_URL` only to point a deployment at a different API.
 7. **Prices**: set the book's slug, title, prices and `onSale: true` in `src/catalog.ts`.
    When a book is added to the website, also add its slug to `KNOWN_BOOKS` there.
 
