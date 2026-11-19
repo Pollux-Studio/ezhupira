@@ -6,11 +6,13 @@ import helmet from "helmet";
 import mongoose from "mongoose";
 import { allowedOrigins, env, isProd } from "./env.js";
 import { readSession } from "./lib/auth.js";
+import { seedBooks } from "./lib/books.js";
 import { adminRouter } from "./routes/admin.js";
 import { authRouter } from "./routes/auth.js";
 import { ordersRouter } from "./routes/orders.js";
 import { reviewsRouter } from "./routes/reviews.js";
 import { shelfRouter } from "./routes/shelf.js";
+import { supportRouter } from "./routes/support.js";
 import { webhooksRouter } from "./routes/webhooks.js";
 
 const app = express();
@@ -49,6 +51,7 @@ app.use("/auth", authRouter);
 app.use("/", ordersRouter);
 app.use("/", reviewsRouter);
 app.use("/me/shelf", shelfRouter);
+app.use("/", supportRouter);
 app.use("/admin", adminRouter);
 
 app.use((_req, res) => res.status(404).json({ error: "Not found" }));
@@ -60,6 +63,7 @@ app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
 if (env.DNS_SERVERS) dns.setServers(env.DNS_SERVERS.split(",").map((s) => s.trim()));
 await mongoose.connect(env.MONGODB_URI, { serverSelectionTimeoutMS: 10_000 });
 console.log("MongoDB connected");
+await seedBooks();
 
 app.listen(env.PORT, () => console.log(`API listening on :${env.PORT} (${env.NODE_ENV}, Cashfree ${env.CASHFREE_ENV})`));
 

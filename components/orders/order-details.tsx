@@ -69,7 +69,7 @@ function Details({ code }: { code: string }) {
     return (
       <div className="space-y-4">
         <p role="alert" className="text-destructive">{error}</p>
-        <Link href="/dashboard" className={buttonVariants({ variant: "outline" })}>Back to dashboard</Link>
+        <Link href="/profile#orders" className={buttonVariants({ variant: "outline" })}>Back to your orders</Link>
       </div>
     );
   }
@@ -121,8 +121,8 @@ function Details({ code }: { code: string }) {
           <OrderTimeline events={order.events} />
         </div>
 
-        <Link href="/dashboard" className={buttonVariants({ variant: "outline", className: "w-full" })}>
-          Back to dashboard
+        <Link href="/profile#orders" className={buttonVariants({ variant: "outline", className: "w-full" })}>
+          Back to your orders
         </Link>
       </CardContent>
     </Card>

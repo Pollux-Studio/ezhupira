@@ -98,13 +98,99 @@ const reviewSchema = new Schema(
 reviewSchema.index({ bookSlug: 1, user: 1 }, { unique: true });
 export const Review = mongoose.model("Review", reviewSchema);
 
+// ------------------------------------------------------------------ books ---
+// The catalogue, edited in the admin. Text only: covers and preview pages are image files in
+// the website repo, referenced here by path. Mallikai key-code fields are filled in
+// automatically from the Unicode text on save (see lib/mallikai.ts).
+
+export const BOOK_STATUSES = ["published", "upcoming", "hidden"] as const;
+
+const editionSchema = new Schema(
+  {
+    id: { type: String, enum: ["hardcopy", "ebook"], required: true },
+    name: { type: String, required: true },
+    description: String,
+    price: { type: Number, default: 0, min: 0 }, // INR, rupees. 0 = not priced yet
+    needsAddress: { type: Boolean, default: false },
+  },
+  { _id: false },
+);
+
+const bookSchema = new Schema(
+  {
+    slug: { type: String, required: true, unique: true, match: /^[a-z0-9]+(?:-[a-z0-9]+)*$/ },
+    title: { type: String, required: true },
+    titleMallikai: String,
+    author: { type: String, required: true },
+    authorMallikai: String,
+    description: { type: String, default: "" },
+    descriptionMallikai: String,
+    year: String,
+    status: { type: String, enum: BOOK_STATUSES, default: "upcoming", index: true },
+    /** Release moment for upcoming books (shown with the countdown). */
+    releaseAt: Date,
+    /** Price shown for books sold elsewhere (e.g. on Pothi). */
+    displayPrice: { amount: Number, note: String },
+    cover: String,
+    publisher: { name: String, logo: String, url: String },
+    buyUrl: String,
+    buyLabel: String,
+    preview: [String],
+    highlights: [String],
+    availability: String,
+    details: [{ _id: false, label: String, value: String, valueMallikai: String }],
+    /** What can be bought here, and for how much (the price charged comes from these). */
+    editions: [editionSchema],
+    /** Open for pre-orders/orders through Ezhupira's own checkout. */
+    preorderOpen: { type: Boolean, default: false },
+    /** Lower numbers first on the site. */
+    sortOrder: { type: Number, default: 0 },
+  },
+  { timestamps: true },
+);
+export type BookDoc = InferSchemaType<typeof bookSchema> & { _id: mongoose.Types.ObjectId };
+export const Book = mongoose.model("Book", bookSchema);
+
+// ---------------------------------------------------------------- support ---
+
+export const TICKET_STATUSES = ["open", "answered", "closed"] as const;
+
+const ticketSchema = new Schema(
+  {
+    code: { type: String, required: true, unique: true }, // SUP-1001
+    user: { type: Schema.Types.ObjectId, ref: "User" },
+    name: { type: String, required: true, maxlength: 100 },
+    email: { type: String, required: true, lowercase: true, maxlength: 200 },
+    topic: { type: String, enum: ["order", "payment", "book", "account", "other"], default: "other" },
+    orderCode: String,
+    subject: { type: String, required: true, maxlength: 200 },
+    status: { type: String, enum: TICKET_STATUSES, default: "open", index: true },
+    /** The conversation: the reader's first message, then replies. */
+    messages: [
+      {
+        _id: false,
+        from: { type: String, enum: ["reader", "admin"], required: true },
+        text: { type: String, required: true, maxlength: 8000 },
+        at: { type: Date, default: Date.now },
+      },
+    ],
+  },
+  { timestamps: true },
+);
+export const Ticket = mongoose.model("Ticket", ticketSchema);
+
 // --------------------------------------------------------------- counters ---
 
 const counterSchema = new Schema({ _id: String, seq: { type: Number, default: 0 } });
 const Counter = mongoose.model("Counter", counterSchema);
 
-/** Next order code: EZH-1001, EZH-1002, … (atomic, safe under concurrent checkouts). */
-export async function nextOrderCode() {
-  const c = await Counter.findOneAndUpdate({ _id: "order" }, { $inc: { seq: 1 } }, { upsert: true, new: true });
-  return `EZH-${1000 + c.seq}`;
+async function next(counter: string) {
+  const c = await Counter.findOneAndUpdate({ _id: counter }, { $inc: { seq: 1 } }, { upsert: true, new: true });
+  return 1000 + c.seq;
 }
+
+/** Next order code: EZH-1001, EZH-1002, … (atomic, safe under concurrent checkouts). */
+export const nextOrderCode = async () => `EZH-${await next("order")}`;
+
+/** Next support ticket code: SUP-1001, … */
+export const nextTicketCode = async () => `SUP-${await next("ticket")}`;

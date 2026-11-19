@@ -68,3 +68,32 @@ export async function sendStatusUpdate(order: OrderDoc, note?: string) {
     layout(title, `${note ? `<p>${esc(note)}</p>` : ""}${orderSummary(order)}${trackLink(order)}`),
   );
 }
+
+// ---------------------------------------------------------------- support ---
+
+type TicketMail = { code: string; name: string; email: string; subject: string; messages: { from: string; text: string }[] };
+
+const quote = (text: string) =>
+  `<div style="background:#fff;border:1px solid #e7e2d8;padding:12px 14px;font-size:14px;white-space:pre-line">${esc(text)}</div>`;
+
+/** "We got your message" to the reader, and a heads-up to you. */
+export async function sendTicketReceived(t: TicketMail) {
+  const first = t.messages[0]?.text ?? "";
+  await send(
+    t.email,
+    `We got your message · ${t.code}`,
+    layout(`Thanks, ${t.name}`, `<p>We received your message and will reply to this email address soon.</p><p style="color:#57534E">Ticket ${esc(t.code)}: ${esc(t.subject)}</p>${quote(first)}`),
+  );
+  if (env.MAIL_ADMIN) {
+    await send(env.MAIL_ADMIN, `New support ticket ${t.code}: ${t.subject}`, layout("New support ticket", `<p>${esc(t.name)} &lt;${esc(t.email)}&gt;</p>${quote(first)}`));
+  }
+}
+
+/** Your reply, emailed to the reader. */
+export async function sendTicketReply(t: TicketMail, reply: string) {
+  await send(
+    t.email,
+    `Re: ${t.subject} · ${t.code}`,
+    layout(`Reply to your message`, `${quote(reply)}<p style="color:#57534E;font-size:13px">Your ticket: ${esc(t.code)} · ${esc(t.subject)}</p>`),
+  );
+}

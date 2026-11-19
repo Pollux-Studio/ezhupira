@@ -24,6 +24,12 @@ export type Book = {
   /** Selling price; `note` is shown after it, e.g. "+ shipping". */
   price?: { amount: number; currency: "INR"; note?: string };
   status: "published" | "upcoming";
+  /** Release moment for upcoming books (ISO date), set in the admin. */
+  releaseAt?: string;
+  /** Editions sold through Ezhupira's own checkout, with prices (from the API). */
+  editions?: { id: "hardcopy" | "ebook"; name: string; description?: string; price: number; needsAddress: boolean }[];
+  /** Open for pre-orders through Ezhupira (from the API). */
+  preorderOpen?: boolean;
   /** Cover image in /public, 5:8 portrait. */
   cover?: string;
   publisher?: Publisher;
@@ -47,7 +53,12 @@ export const PUBLISHERS = {
   pothi: { name: "Pothi.com", logo: "/pothi_publisher.svg", url: "https://store.pothi.com/" },
 } satisfies Record<string, Publisher>;
 
-export const books: Book[] = [
+/**
+ * The catalogue as it was before it moved into the database. The site reads books from the
+ * API (lib/catalog.ts); this copy is only used if the API can't be reached, so pages still
+ * render. Edit books in the admin, not here.
+ */
+export const fallbackBooks: Book[] = [
   {
     slug: "naan-yaar",
     title: "நான் யார்?",
@@ -96,8 +107,4 @@ export function formatPrice(price: NonNullable<Book["price"]>) {
     maximumFractionDigits: 0,
   }).format(price.amount);
   return price.note ? `${amount} ${price.note}` : amount;
-}
-
-export function getBook(slug: string) {
-  return books.find((book) => book.slug === slug);
 }

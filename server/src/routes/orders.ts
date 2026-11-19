@@ -1,7 +1,7 @@
 import { Router } from "express";
 import rateLimit from "express-rate-limit";
 import { z } from "zod";
-import { catalog, findEdition } from "../catalog.js";
+import { findEdition, listPublicBooks } from "../lib/books.js";
 import { env } from "../env.js";
 import { requireAuth } from "../lib/auth.js";
 import { createOrder, getOrder, normalizePhone } from "../lib/cashfree.js";
@@ -14,11 +14,18 @@ const checkoutLimit = rateLimit({ windowMs: 15 * 60 * 1000, limit: 20, standardH
 const trackLimit = rateLimit({ windowMs: 15 * 60 * 1000, limit: 30, standardHeaders: true, legacyHeaders: false });
 
 /** Editions and prices, so the website shows exactly what will be charged. */
-ordersRouter.get("/catalog", (_req, res) => {
+ordersRouter.get("/catalog", async (_req, res) => {
+  const books = await listPublicBooks();
   res.json({
     cashfreeMode: env.CASHFREE_ENV,
-    books: catalog.map((b) => ({ slug: b.slug, title: b.title, onSale: b.onSale, editions: b.editions })),
+    books: books.map((b) => ({ slug: b.slug, title: b.title, onSale: b.preorderOpen, editions: b.editions })),
   });
+});
+
+/** Every book on the site (the website and admin read the catalogue from here). */
+ordersRouter.get("/books", async (_req, res) => {
+  res.set("Cache-Control", "public, max-age=30");
+  res.json({ books: await listPublicBooks() });
 });
 
 const addressSchema = z.object({
@@ -43,8 +50,8 @@ ordersRouter.post("/orders", requireAuth, checkoutLimit, async (req, res) => {
   if (!parsed.success) return res.status(400).json({ error: parsed.error.issues[0]?.message ?? "Invalid order." });
   const { bookSlug, editionId, name, address } = parsed.data;
 
-  const found = findEdition(bookSlug, editionId);
-  if (!found || !found.book.onSale || found.edition.price <= 0) {
+  const found = await findEdition(bookSlug, editionId);
+  if (!found) {
     return res.status(400).json({ error: "This edition isn't open for orders yet." });
   }
   if (found.edition.needsAddress && !address) return res.status(400).json({ error: "Please add a shipping address." });

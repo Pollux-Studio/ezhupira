@@ -17,19 +17,21 @@ import { SiteHeader } from "@/components/site-header";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { JsonLd } from "@/components/json-ld";
-import { books, formatPrice, getBook, type Book } from "@/lib/books";
+import { formatPrice, type Book } from "@/lib/books";
+import { getBook, getBooks } from "@/lib/catalog";
 import { AUTHOR, bookLd, bookTitleLatin, breadcrumbLd } from "@/lib/site";
 import { cn } from "@/lib/utils";
 
-export function generateStaticParams() {
-  return books.map((book) => ({ slug: book.slug }));
+// Books added later in the admin render on first visit (dynamic params), then stay cached.
+export async function generateStaticParams() {
+  return (await getBooks()).map((book) => ({ slug: book.slug }));
 }
 
 export async function generateMetadata({
   params,
 }: PageProps<"/books/[slug]">): Promise<Metadata> {
   const { slug } = await params;
-  const book = getBook(slug);
+  const book = await getBook(slug);
   if (!book) return {};
   const latin = bookTitleLatin(book);
   const title = `${book.title}${latin ? ` (${latin})` : ""} by ${AUTHOR.name} · Tamil poetry book`;
@@ -81,7 +83,7 @@ function Price({ book, size = "lg" }: { book: Book; size?: "lg" | "sm" }) {
 
 export default async function BookPage({ params }: PageProps<"/books/[slug]">) {
   const { slug } = await params;
-  const book = getBook(slug);
+  const book = await getBook(slug);
   if (!book) notFound();
 
   return (

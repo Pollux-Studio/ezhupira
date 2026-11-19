@@ -10,12 +10,12 @@ import { OrderList } from "@/components/orders/order-list";
 import { StatusBadge, formatDate } from "@/components/orders/order-status";
 import { Bookshelf } from "@/components/profile/bookshelf";
 import { MyReviews } from "@/components/profile/my-reviews";
-import { SideNoise } from "@/components/side-noise";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { PageNoise } from "@/components/page-noise";
+import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UserAvatar } from "@/components/user-avatar";
 import { api, type MyReview, type Order, type ReadBook } from "@/lib/api";
-import { books } from "@/lib/books";
+import type { Book } from "@/lib/books";
 import { cn } from "@/lib/utils";
 
 /** Orders that count as owning the book. */
@@ -36,7 +36,7 @@ function useTab(): [Tab, (tab: Tab) => void] {
   return [tab, (next) => void (window.location.hash = next)];
 }
 
-// Tabs run down the profile card on wide screens and across it on phones.
+// The menu is a vertical tab list on wide screens and a sideways row on phones.
 const WIDE = "(min-width: 768px)";
 const subscribeWide = (onChange: () => void) => {
   const mq = window.matchMedia(WIDE);
@@ -62,7 +62,7 @@ function Empty({ children }: { children: ReactNode }) {
 }
 
 /** A book from an order: its cover when it's on the site, otherwise a red title card. */
-function PurchasedBook({ order }: { order: Order }) {
+function PurchasedBook({ order, books }: { order: Order; books: Book[] }) {
   const book = books.find((b) => b.slug === order.bookSlug);
   return (
     <li>
@@ -99,7 +99,7 @@ function Stat({ value, label, onClick }: { value: number | string; label: string
   );
 }
 
-export function ProfilePage({ releaseLabel }: { releaseLabel: string }) {
+export function ProfilePage({ releaseLabel, books }: { releaseLabel: string; books: Book[] }) {
   const router = useRouter();
   const { user, signOut } = useSession();
   const [orders, setOrders] = useState<Order[] | null>(null);
@@ -135,6 +135,7 @@ export function ProfilePage({ releaseLabel }: { releaseLabel: string }) {
   }, [user]);
 
   const shelfBooks = books.filter((b) => b.status === "published");
+  const preorderBook = books.find((b) => b.status === "upcoming" && b.preorderOpen);
   const owned = (orders ?? []).filter((o) => OWNED.includes(o.status));
   const readCount = read ? shelfBooks.filter((b) => read.some((r) => r.bookSlug === b.slug)).length : 0;
   const loading = !user || (!orders && !error);
@@ -143,11 +144,7 @@ export function ProfilePage({ releaseLabel }: { releaseLabel: string }) {
     <div className="relative isolate flex flex-1 flex-col">
       {/* The site's red noise: a vertical strip down the left on wide screens, a band behind
           the profile card on phones. */}
-      <SideNoise
-        className="pointer-events-none absolute inset-y-0 left-0 -z-10 hidden md:block"
-        style={{ width: "calc((100vw - min(100vw, 64rem)) / 2 + 1rem + 9rem)" }}
-      />
-      <SideNoise className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-44 md:hidden" />
+      <PageNoise variant="side" />
 
       <Tabs
         value={tab}
@@ -157,9 +154,9 @@ export function ProfilePage({ releaseLabel }: { releaseLabel: string }) {
         className="mx-auto grid w-full max-w-5xl flex-1 gap-8 px-4 py-8 md:grid-cols-[17rem_1fr] md:gap-12 md:py-12"
       >
         {/* Left: who you are */}
-        <aside className="md:sticky md:top-24 md:self-start">
+        <aside className="min-w-0 space-y-4 md:sticky md:top-24 md:self-start">
           {user ? (
-            <div className="space-y-5 border bg-background p-5 shadow-sm">
+            <div className="space-y-5 border bg-background p-5">
               <div className="flex items-center gap-4 md:flex-col md:items-start">
                 <UserAvatar seed={user.avatarSeed} name={user.name} className="size-20 ring-4 ring-background md:size-24" />
                 <div className="min-w-0 space-y-0.5">
@@ -180,38 +177,48 @@ export function ProfilePage({ releaseLabel }: { releaseLabel: string }) {
                 <Stat value={loading ? "–" : (reviews?.length ?? 0)} label="Reviews" onClick={() => setTab("reviews")} />
               </div>
 
-              <TabsList variant="line" aria-label="Profile sections" className="w-full gap-1 md:items-stretch">
-                {[
-                  { value: "bookshelf", label: "Bookshelf", short: "Shelf", Icon: LibraryBig },
-                  { value: "purchased", label: "Purchased books", short: "Bought", Icon: ShoppingBag },
-                  { value: "orders", label: "Orders", short: "Orders", Icon: Package },
-                  { value: "reviews", label: "Your reviews", short: "Reviews", Icon: MessageSquareText },
-                ].map(({ value, label, short, Icon }) => (
-                  <TabsTrigger
-                    key={value}
-                    value={value}
-                    className="h-10 gap-2 px-3 text-sm data-active:bg-primary/10 data-active:text-primary md:h-9 md:after:bg-primary"
-                  >
-                    <Icon aria-hidden className="size-4" />
-                    <span className="md:hidden">{short}</span>
-                    <span className="max-md:hidden">{label}</span>
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-
-              <div className="grid gap-2">
-                <Link href="/dashboard" className={buttonVariants()}>
-                  Pre-order the next book
-                </Link>
-                <Button variant="outline" onClick={() => signOut().then(() => router.replace("/"))} className="gap-2">
-                  <LogOut aria-hidden />
-                  Sign out
-                </Button>
-              </div>
+              <Button variant="outline" onClick={() => signOut().then(() => router.replace("/"))} className="w-full gap-2">
+                <LogOut aria-hidden />
+                Sign out
+              </Button>
             </div>
           ) : (
-            <div className="h-96 animate-pulse border bg-muted" aria-label="Loading" />
+            <div className="h-72 animate-pulse border bg-muted" aria-label="Loading" />
           )}
+
+          {/* The menu: a vertical tab list on wide screens; on phones, four tabs side by side
+              (icon over a short label) that always fit, no scrolling. */}
+          <nav aria-label="Your library" className="border bg-background p-1.5 md:p-2">
+            <TabsList
+              variant="line"
+              aria-label="Profile sections"
+              className="grid h-auto w-full grid-cols-4 gap-1 bg-transparent p-0 md:flex md:flex-col md:items-stretch"
+            >
+              {[
+                { value: "bookshelf", label: "Bookshelf", short: "Shelf", Icon: LibraryBig, count: read ? readCount : null },
+                { value: "purchased", label: "Purchased books", short: "Bought", Icon: ShoppingBag, count: orders ? owned.length : null },
+                { value: "orders", label: "Orders", short: "Orders", Icon: Package, count: orders?.length ?? null },
+                { value: "reviews", label: "Reviews", short: "Reviews", Icon: MessageSquareText, count: reviews?.length ?? null },
+              ].map(({ value, label, short, Icon, count }) => (
+                <TabsTrigger
+                  key={value}
+                  value={value}
+                  className="h-auto min-w-0 flex-col gap-1 rounded-md px-1 py-2 text-xs font-medium after:hidden data-active:border-transparent! data-active:bg-primary! data-active:text-primary-foreground! md:h-11 md:w-full md:flex-row md:justify-start md:gap-3 md:px-3 md:py-0 md:text-sm"
+                >
+                  <Icon aria-hidden className="size-4" />
+                  <span className="flex min-w-0 items-center gap-1 md:flex-1">
+                    <span className="truncate md:hidden">{short}</span>
+                    <span className="truncate max-md:hidden">{label}</span>
+                    {count !== null && (
+                      <span className="min-w-5 rounded-full bg-muted px-1 text-center text-[0.65rem] tabular-nums text-muted-foreground md:ml-auto md:min-w-6 md:px-1.5 md:text-xs [[data-active]_&]:bg-primary-foreground/20 [[data-active]_&]:text-primary-foreground">
+                        {count}
+                      </span>
+                    )}
+                  </span>
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </nav>
         </aside>
 
         {/* Right: your books and orders */}
@@ -225,7 +232,13 @@ export function ProfilePage({ releaseLabel }: { releaseLabel: string }) {
           <TabsContent value="bookshelf" className="space-y-4 text-base">
             <PanelHeading icon={<BookOpenCheck aria-hidden />} title="Your bookshelf" />
             {read ? (
-              <Bookshelf books={shelfBooks} read={read} onChange={setRead} upcomingLabel={releaseLabel.split(" · ")[0]} />
+              <Bookshelf
+                books={shelfBooks}
+                read={read}
+                onChange={setRead}
+                upcomingLabel={releaseLabel.split(" · ")[0]}
+                upcomingHref={preorderBook ? `/books/${preorderBook.slug}/preorder` : undefined}
+              />
             ) : (
               <div className="h-72 animate-pulse rounded-lg bg-muted" />
             )}
@@ -236,7 +249,7 @@ export function ProfilePage({ releaseLabel }: { releaseLabel: string }) {
             {orders && owned.length > 0 ? (
               <ul className="grid gap-3 sm:grid-cols-2">
                 {owned.map((o) => (
-                  <PurchasedBook key={o.code} order={o} />
+                  <PurchasedBook key={o.code} order={o} books={books} />
                 ))}
               </ul>
             ) : orders ? (
@@ -262,13 +275,7 @@ export function ProfilePage({ releaseLabel }: { releaseLabel: string }) {
             {orders && orders.length > 0 ? (
               <OrderList orders={orders} />
             ) : orders ? (
-              <Empty>
-                No orders yet.{" "}
-                <Link href="/dashboard" className="font-medium text-foreground underline">
-                  Pre-order the next book
-                </Link>
-                .
-              </Empty>
+              <Empty>No orders yet. When a book opens for pre-order, you&apos;ll find the button on its page.</Empty>
             ) : (
               <div className="h-28 animate-pulse rounded-lg bg-muted" />
             )}
@@ -276,7 +283,7 @@ export function ProfilePage({ releaseLabel }: { releaseLabel: string }) {
 
           <TabsContent value="reviews" className="space-y-4 text-base">
             <PanelHeading icon={<MessageSquareText aria-hidden />} title="Your reviews" />
-            {reviews ? <MyReviews reviews={reviews} onChange={setReviews} /> : <div className="h-28 animate-pulse rounded-lg bg-muted" />}
+            {reviews ? <MyReviews reviews={reviews} onChange={setReviews} books={books} /> : <div className="h-28 animate-pulse rounded-lg bg-muted" />}
           </TabsContent>
         </div>
       </Tabs>

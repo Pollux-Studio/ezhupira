@@ -8,9 +8,9 @@ import { ReviewStatus, reviewDate } from "@/components/book/review-section";
 import { Stars } from "@/components/reviews/stars";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { api, type MyReview } from "@/lib/api";
-import { books } from "@/lib/books";
+import type { Book } from "@/lib/books";
 
-function ReviewRow({ review, onDeleted }: { review: MyReview; onDeleted: (id: string) => void }) {
+function ReviewRow({ review, books, onDeleted }: { review: MyReview; books: Book[]; onDeleted: (id: string) => void }) {
   const book = books.find((b) => b.slug === review.bookSlug);
   const [confirming, setConfirming] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -83,7 +83,7 @@ function ReviewRow({ review, onDeleted }: { review: MyReview; onDeleted: (id: st
 }
 
 /** Every review the reader has written, with status, edit and delete. */
-export function MyReviews({ reviews, onChange }: { reviews: MyReview[]; onChange: (reviews: MyReview[]) => void }) {
+export function MyReviews({ reviews, books, onChange }: { reviews: MyReview[]; books: Book[]; onChange: (reviews: MyReview[]) => void }) {
   if (reviews.length === 0) {
     return (
       <div className="rounded-lg border border-dashed bg-background/60 p-6 text-center text-sm text-muted-foreground">
@@ -98,7 +98,7 @@ export function MyReviews({ reviews, onChange }: { reviews: MyReview[]; onChange
   return (
     <ul className="space-y-3">
       {reviews.map((r) => (
-        <ReviewRow key={r.id} review={r} onDeleted={(id) => onChange(reviews.filter((x) => x.id !== id))} />
+        <ReviewRow key={r.id} review={r} books={books} onDeleted={(id) => onChange(reviews.filter((x) => x.id !== id))} />
       ))}
     </ul>
   );

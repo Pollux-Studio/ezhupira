@@ -19,8 +19,11 @@ import { editions as editionCopy, formatPrice } from "@/lib/preorder";
 
 const describe = (id: CatalogEdition["id"]) => editionCopy.find((e) => e.id === id)?.description ?? "";
 
-/** Pre-order form. Editions and prices come from the API (it decides what's charged). */
-export function PreorderForm({ user }: { user: User }) {
+/**
+ * Pre-order form for one specific book. Editions and prices come from the API (it decides
+ * what's charged); it only opens if the API has that book on sale.
+ */
+export function PreorderForm({ user, bookSlug }: { user: User; bookSlug: string }) {
   const [catalog, setCatalog] = useState<Catalog | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [editionId, setEditionId] = useState<CatalogEdition["id"]>("hardcopy");
@@ -34,9 +37,18 @@ export function PreorderForm({ user }: { user: User }) {
   if (loadError) return <p className="text-sm text-destructive">{loadError}</p>;
   if (!catalog) return <div className="h-80 animate-pulse rounded-lg bg-muted" aria-label="Loading" />;
 
-  const book = catalog.books.find((b) => b.onSale) ?? catalog.books[0];
-  if (!book) return <p className="text-muted-foreground">No book is open for pre-order right now.</p>;
-  const open = book.onSale && book.editions.some((e) => e.price > 0);
+  const book = catalog.books.find((b) => b.slug === bookSlug);
+  const open = !!book && book.onSale && book.editions.some((e) => e.price > 0);
+  if (!book || !open) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Pre-orders aren&apos;t open for this book</CardTitle>
+          <CardDescription>When they open, the pre-order form will appear right here on this page.</CardDescription>
+        </CardHeader>
+      </Card>
+    );
+  }
   const edition = book.editions.find((e) => e.id === editionId) ?? book.editions[0];
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -48,7 +60,7 @@ export function PreorderForm({ user }: { user: User }) {
     try {
       const session = await api<CheckoutSession>("/orders", {
         body: {
-          bookSlug: book.slug,
+          bookSlug,
           editionId: edition.id,
           name: get("name"),
           phone: get("phone"),
@@ -68,9 +80,7 @@ export function PreorderForm({ user }: { user: User }) {
     <Card>
       <CardHeader>
         <CardTitle>Pre-order {book.title}</CardTitle>
-        <CardDescription>
-          {open ? "Choose an edition and tell us where to send it." : "Pre-orders open soon. Prices will be announced here."}
-        </CardDescription>
+        <CardDescription>Choose an edition and tell us where to send it.</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit}>
@@ -130,10 +140,10 @@ export function PreorderForm({ user }: { user: User }) {
                 {error}
               </p>
             )}
-            <Button type="submit" disabled={!open || submitting}>
-              {submitting ? "Opening payment…" : open ? `Pay ${formatPrice(edition.price)}` : "Pre-orders open soon"}
+            <Button type="submit" disabled={submitting}>
+              {submitting ? "Opening payment…" : `Pay ${formatPrice(edition.price)}`}
             </Button>
-            {catalog.cashfreeMode === "sandbox" && open && (
+            {catalog.cashfreeMode === "sandbox" && (
               <FieldDescription className="text-center">Test mode: no real money is charged.</FieldDescription>
             )}
           </FieldGroup>

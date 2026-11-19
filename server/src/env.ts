@@ -37,6 +37,9 @@ const schema = z.object({
   /** Where new-order notifications for you go. */
   MAIL_ADMIN: z.string().optional(),
 
+  /** Shared with the website's /api/revalidate so book edits show up right away. Optional. */
+  REVALIDATE_SECRET: z.string().optional(),
+
   /** Ping PUBLIC_URL/health on this interval (minutes) so Render's free tier doesn't sleep. 0 = off. */
   KEEP_ALIVE_MINUTES: z.coerce.number().default(10),
 });

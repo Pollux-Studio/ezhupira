@@ -15,6 +15,7 @@ const eslintConfig = defineConfig([
     "build/**",
     "turnjs4/**",
     "server/**",
+    "admin/**",
     "next-env.d.ts",
   ]),
 ]);

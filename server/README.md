@@ -6,7 +6,7 @@ Node.js (Express 5) server for sign-in, orders, payments and reviews. The websit
 | Piece | Service |
 |---|---|
 | Sign-in | Google via Firebase Auth (Firebase ID token → httpOnly session cookie on `.ezhupira.in`) |
-| Database | MongoDB Atlas (Mongoose) |
+| Database | MongoDB Atlas (Mongoose): users, books, orders, reviews, support tickets |
 | Payments | Cashfree Payment Gateway (Orders API + webhook) |
 | Email | Resend |
 | Hosting | Render web service, kept awake by a `/health` ping |
@@ -32,7 +32,9 @@ On Windows, if Atlas fails with `querySrv ECONNREFUSED`, set `DNS_SERVERS=8.8.8.
 | POST | `/auth/firebase` | anyone | `{ idToken }` from Firebase Google sign-in → sets session cookie |
 | GET | `/auth/me` | signed in | Current user |
 | POST | `/auth/logout` | anyone | Clears the session |
-| GET | `/catalog` | anyone | Editions and prices |
+| GET | `/books` | anyone | The catalogue (the website reads books from here) |
+| GET | `/catalog` | anyone | Editions, prices and which books are open for pre-order |
+| POST | `/support` | anyone | Contact form → support ticket (emails a copy) |
 | POST | `/orders` | signed in | Create order + Cashfree session → `{ code, paymentSessionId }` |
 | GET | `/orders/mine` | signed in | Your orders |
 | GET | `/orders/:code` | owner/admin | Order (re-checks Cashfree while pending) |
@@ -45,8 +47,13 @@ On Windows, if Atlas fails with `querySrv ECONNREFUSED`, set `DNS_SERVERS=8.8.8.
 | DELETE | `/me/reviews/:id` | signed in | Delete your own review |
 | GET | `/me/shelf` | signed in | Books you've marked read |
 | PUT | `/me/shelf/:slug` | signed in | `{ read: true\|false }` |
-| GET/PATCH | `/admin/orders[/:code]` | admin | List orders; set status (`shipped` + tracking note emails the customer) |
+| GET | `/admin/stats` | admin | Revenue, orders by status, sales per book, last 30 days |
+| GET/PATCH | `/admin/orders[/:code]` | admin | Search orders; set status (`shipped` + tracking note emails the customer) |
+| GET/POST | `/admin/orders/:code/payments`, `/sync` | admin | Live Cashfree payment attempts; re-check a pending order |
+| GET | `/admin/payments` | admin | Paid and refunded orders with Cashfree payment IDs |
+| GET/POST/PATCH | `/admin/books[/:slug]` | admin | Add books, edit content and prices, open/close pre-orders |
 | GET/PATCH/DELETE | `/admin/reviews[/:id]` | admin | Moderate reviews |
+| GET/PATCH/POST | `/admin/support[/:code][/reply]` | admin | Support inbox; reply by email; close |
 
 Admins are the emails in `ADMIN_EMAILS`.
 
@@ -78,8 +85,10 @@ Admins are the emails in `ADMIN_EMAILS`.
    The session cookie only works across the site and API when both are on `ezhupira.in`.
 6. **Vercel**: nothing to set. Production builds call `https://api.ezhupira.in` by default
    (`lib/api.ts`); set `NEXT_PUBLIC_API_URL` only to point a deployment at a different API.
-7. **Prices**: set the book's slug, title, prices and `onSale: true` in `src/catalog.ts`.
-   When a book is added to the website, also add its slug to `KNOWN_BOOKS` there.
+7. **Books**: managed in the admin (admin.ezhupira.in). On first start the API seeds the
+   catalogue with the books the website had. Covers and preview images stay as files in the
+   website's `public/` folder; the admin stores their paths. Tamil titles are converted to the
+   Mallikai brand font automatically (`src/lib/mallikai.ts`, a port of `scripts/to-mallikai.py`).
 
 ## Keeping Render awake
 

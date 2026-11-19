@@ -1,7 +1,7 @@
 // The reader's bookshelf: which books they've marked as read.
 import { Router } from "express";
 import { z } from "zod";
-import { KNOWN_BOOKS } from "../catalog.js";
+import { isKnownBook } from "../lib/books.js";
 import { requireAuth } from "../lib/auth.js";
 import { User } from "../models.js";
 
@@ -24,7 +24,7 @@ shelfRouter.put("/:slug", async (req, res) => {
   const slug = String(req.params.slug);
   const body = z.object({ read: z.boolean() }).safeParse(req.body);
   if (!body.success) return res.status(400).json({ error: "Send { read: true | false }." });
-  if (!KNOWN_BOOKS.has(slug)) return res.status(404).json({ error: "Unknown book." });
+  if (!(await isKnownBook(slug))) return res.status(404).json({ error: "Unknown book." });
 
   const userId = req.session!.userId;
   if (body.data.read) {

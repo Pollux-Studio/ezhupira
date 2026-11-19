@@ -1,8 +1,8 @@
 // Content for /llms.txt and /llms-full.txt (https://llmstxt.org): a plain-Markdown map of
 // the site for AI assistants and answer engines. Built from the same data as the pages.
 import { AUTHOR_BIO_EN, AUTHOR_BIO_TA } from "@/lib/author";
-import { books, formatPrice, type Book } from "@/lib/books";
-import { RELEASE_LABEL } from "@/lib/release";
+import { formatPrice, type Book } from "@/lib/books";
+import { releaseLabel } from "@/lib/release";
 import { AUTHOR, SITE, SITE_URL, abs, bookTitleLatin, homeFaq } from "@/lib/site";
 
 const bookLine = (b: Book) => {
@@ -11,12 +11,13 @@ const bookLine = (b: Book) => {
   return `- [${b.title}${latin ? ` (${latin})` : ""}](${abs(`/books/${b.slug}`)}): ${bits.join(", ")}. ${b.description}`;
 };
 
-export function llmsTxt() {
+export function llmsTxt(books: Book[]) {
+  const release = releaseLabel(books.find((b) => b.status === "upcoming")?.releaseAt);
   return `# ${SITE.name} (${SITE.nameTa})
 
 > ${SITE.description}
 
-${SITE.name} (${SITE_URL}) is the official website of Tamil poet and author ${AUTHOR.name} (${AUTHOR.nameTa}). Content is in Tamil with English navigation. Next release: ${RELEASE_LABEL}.
+${SITE.name} (${SITE_URL}) is the official website of Tamil poet and author ${AUTHOR.name} (${AUTHOR.nameTa}). Content is in Tamil with English navigation. Next release: ${release}.
 
 ## Books
 
@@ -25,7 +26,6 @@ ${books.map(bookLine).join("\n")}
 ## About
 
 - [About the author](${AUTHOR.url}): biography of ${AUTHOR.name} in Tamil and English, with Instagram and podcast links.
-- [Pre-order](${SITE_URL}/login): pre-order the next book.
 - [Track order](${abs("/track-order")}): check the status of a pre-order.
 
 ## Optional
@@ -36,7 +36,7 @@ ${books.map(bookLine).join("\n")}
 `;
 }
 
-export function llmsFullTxt() {
+export function llmsFullTxt(books: Book[]) {
   const bookSection = (b: Book) => {
     const latin = bookTitleLatin(b);
     const facts = [
@@ -53,7 +53,7 @@ export function llmsFullTxt() {
     return `### ${b.title}${latin ? ` (${latin})` : ""}\n\n${b.description}\n\n${facts.join("\n")}`;
   };
 
-  return `${llmsTxt()}
+  return `${llmsTxt(books)}
 ---
 
 ## About the author: ${AUTHOR.name} (${AUTHOR.nameTa})
@@ -71,7 +71,7 @@ ${books.map(bookSection).join("\n\n")}
 
 ## Frequently asked questions
 
-${homeFaq()
+${homeFaq(books)
   .map(({ q, a }) => `### ${q}\n\n${a}`)
   .join("\n\n")}
 `;

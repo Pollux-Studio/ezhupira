@@ -2,7 +2,7 @@ import type { MetadataRoute } from "next";
 import { SITE_URL } from "@/lib/site";
 
 // Private flows stay out of search; everything else, including AI answer engines, is welcome.
-const PRIVATE = ["/login", "/dashboard", "/orders/", "/profile"];
+const PRIVATE = ["/login", "/orders/", "/profile", "/books/*/preorder"];
 
 // AI crawlers named explicitly so a future blanket rule can't shut them out by accident.
 const AI_BOTS = [

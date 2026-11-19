@@ -1,8 +1,9 @@
 import type { MetadataRoute } from "next";
-import { books } from "@/lib/books";
+import { getBooks } from "@/lib/catalog";
 import { SITE_URL, abs } from "@/lib/site";
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const books = await getBooks();
   const now = new Date();
   return [
     { url: SITE_URL, lastModified: now, changeFrequency: "weekly", priority: 1 },
@@ -16,5 +17,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: abs("/author"), lastModified: now, changeFrequency: "monthly", priority: 0.8 },
     { url: abs("/type-garden"), lastModified: now, changeFrequency: "yearly", priority: 0.4 },
     { url: abs("/track-order"), lastModified: now, changeFrequency: "yearly", priority: 0.3 },
+    { url: abs("/support"), lastModified: now, changeFrequency: "yearly", priority: 0.3 },
   ];
 }

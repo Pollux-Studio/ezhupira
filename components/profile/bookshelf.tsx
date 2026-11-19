@@ -26,6 +26,40 @@ function Rail() {
   );
 }
 
+const UPCOMING_COVER =
+  "group relative block aspect-[5/8] w-full overflow-hidden rounded-t-sm bg-foreground text-background ring-1 ring-foreground/10";
+
+/** The next book's veiled cover: a link to its pre-order page when one is open, else a teaser. */
+function UpcomingCover({
+  href,
+  label,
+  children,
+}: {
+  href?: string;
+  label: string;
+  children: React.ReactNode;
+}) {
+  if (!href) {
+    return (
+      <div role="img" aria-label={label} className={UPCOMING_COVER}>
+        {children}
+      </div>
+    );
+  }
+  return (
+    <Link
+      href={href}
+      aria-label={label}
+      className={cn(
+        UPCOMING_COVER,
+        "transition-transform outline-none hover:-translate-y-1.5 focus-visible:ring-2 focus-visible:ring-ring",
+      )}
+    >
+      {children}
+    </Link>
+  );
+}
+
 /**
  * Bookshelf: every Ezhupira book as a cover on a shelf. Tapping a cover marks it read (a red
  * "READ" stamp) or unread; the change shows at once and is saved to the account.
@@ -35,12 +69,15 @@ export function Bookshelf({
   read,
   onChange,
   upcomingLabel,
+  upcomingHref,
 }: {
   books: Book[];
   read: ReadBook[];
   onChange: (read: ReadBook[]) => void;
   /** Shown as an empty "coming soon" slot when the next book isn't on the shelf yet. */
   upcomingLabel?: string;
+  /** That book's own pre-order page, when it's open for pre-order. Without it the slot is just a teaser. */
+  upcomingHref?: string;
 }) {
   const [pending, setPending] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -176,10 +213,13 @@ export function Bookshelf({
             <li className="space-y-3">
               {/* The next release as a veiled cover: same size, frame and lift as a real book. */}
               <div className="relative pb-[3px]">
-                <Link
-                  href="/dashboard"
-                  aria-label={`Next book, coming ${upcomingLabel}. Pre-order it`}
-                  className="group relative block aspect-[5/8] w-full overflow-hidden rounded-t-sm bg-foreground text-background ring-1 ring-foreground/10 transition-transform outline-none hover:-translate-y-1.5 focus-visible:ring-2 focus-visible:ring-ring"
+                <UpcomingCover
+                  href={upcomingHref}
+                  label={
+                    upcomingHref
+                      ? `Next book, coming ${upcomingLabel}. Pre-order it`
+                      : `Next book, coming ${upcomingLabel}`
+                  }
                 >
                   {/* Spine */}
                   <span
@@ -214,18 +254,24 @@ export function Bookshelf({
                       {upcomingLabel}
                     </span>
                   </span>
-                </Link>
+                </UpcomingCover>
                 <Rail />
               </div>
               {/* Same two caption lines as a real book, so the shelf lines up. */}
               <div className="space-y-0.5">
-                <Link
-                  href="/dashboard"
-                  className="block truncate text-lg leading-tight hover:underline"
-                >
-                  Next book
-                </Link>
-                <p className="text-xs text-muted-foreground">Pre-order now</p>
+                {upcomingHref ? (
+                  <Link
+                    href={upcomingHref}
+                    className="block truncate text-lg leading-tight hover:underline"
+                  >
+                    Next book
+                  </Link>
+                ) : (
+                  <p className="truncate text-lg leading-tight">Next book</p>
+                )}
+                <p className="text-xs text-muted-foreground">
+                  {upcomingHref ? "Pre-order now" : `Coming ${upcomingLabel}`}
+                </p>
               </div>
             </li>
           )}

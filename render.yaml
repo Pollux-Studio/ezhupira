@@ -23,6 +23,9 @@ services:
         value: https://api.ezhupira.in
       - key: COOKIE_DOMAIN
         value: .ezhupira.in
+      # The admin app (admin.ezhupira.in) calls this API too.
+      - key: EXTRA_ORIGINS
+        value: https://admin.ezhupira.in
       - key: CASHFREE_ENV
         value: sandbox
       - key: KEEP_ALIVE_MINUTES
@@ -44,4 +47,7 @@ services:
       - key: RESEND_API_KEY
         sync: false
       - key: MAIL_ADMIN
+        sync: false
+      # Same value as REVALIDATE_SECRET on the website (Vercel), so book edits show at once.
+      - key: REVALIDATE_SECRET
         sync: false

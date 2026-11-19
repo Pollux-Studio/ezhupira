@@ -51,3 +51,8 @@ next-env.d.ts
 # Local credential files (never commit)
 *.env
 *credentials*
+
+# Admin app (deployed separately to admin.ezhupira.in)
+/admin/node_modules
+/admin/.next
+/admin/next-env.d.ts

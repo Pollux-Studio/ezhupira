@@ -1,6 +1,6 @@
 // Site-wide facts used by metadata, JSON-LD, the sitemap, robots and llms.txt.
 // Keep these accurate: search engines and AI answer engines quote them verbatim.
-import { books, type Book } from "@/lib/books";
+import type { Book } from "@/lib/books";
 import { RELEASE_LABEL } from "@/lib/release";
 
 /** Production origin. Override with NEXT_PUBLIC_SITE_URL for preview deployments. */
@@ -144,7 +144,7 @@ export function breadcrumbLd(items: { name: string; path: string }[]) {
 }
 
 /** Questions answered on the home page; also emitted as FAQPage for answer engines. */
-export function homeFaq() {
+export function homeFaq(books: Book[], release: string = RELEASE_LABEL) {
   const published = books.filter((b) => b.status === "published");
   const list = published.map((b) => `${b.title}${bookTitleLatin(b) ? ` (${bookTitleLatin(b)})` : ""}`).join(", ");
   return [
@@ -170,7 +170,7 @@ export function homeFaq() {
     },
     {
       q: "When is the next Ezhupira book releasing?",
-      a: `The next book by Prasanth J releases on ${RELEASE_LABEL}. Pre-orders are open on ezhupira.in.`,
+      a: `The next book by Prasanth J releases on ${release}. When pre-orders open, the book gets its own pre-order page on ezhupira.in.`,
     },
   ];
 }

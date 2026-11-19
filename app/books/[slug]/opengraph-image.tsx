@@ -1,6 +1,7 @@
 import { ImageResponse } from "next/og";
 import { Product } from "@/components/og/product";
-import { books, formatPrice, getBook } from "@/lib/books";
+import { formatPrice } from "@/lib/books";
+import { getBook, getBooks } from "@/lib/catalog";
 import { Mallikai, OG_SIZE, OgBrand, ogFonts, publicDataUri } from "@/lib/og";
 import { bookTitleLatin } from "@/lib/site";
 
@@ -8,13 +9,13 @@ export const alt = "Book cover and details on Ezhupira";
 export const size = OG_SIZE;
 export const contentType = "image/png";
 
-export function generateStaticParams() {
-  return books.map((book) => ({ slug: book.slug }));
+export async function generateStaticParams() {
+  return (await getBooks()).map((book) => ({ slug: book.slug }));
 }
 
 export default async function Image({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const book = getBook(slug);
+  const book = await getBook(slug);
   if (!book) return new Response("Not found", { status: 404 });
 
   const latin = bookTitleLatin(book);

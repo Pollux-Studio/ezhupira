@@ -9,8 +9,9 @@ import { SiteHeader } from "@/components/site-header";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { books, formatPrice, type Book } from "@/lib/books";
-import { RELEASE_LABEL } from "@/lib/release";
+import { formatPrice, type Book } from "@/lib/books";
+import { getBooks } from "@/lib/catalog";
+import { releaseLabel } from "@/lib/release";
 import { cn } from "@/lib/utils";
 import { JsonLd } from "@/components/json-ld";
 import { abs, bookLd, faqLd, homeFaq } from "@/lib/site";
@@ -78,9 +79,13 @@ function BookCard({ book }: { book: Book }) {
   );
 }
 
-export default function HomePage() {
+export default async function HomePage() {
+  const books = await getBooks();
   const published = books.filter((b) => b.status === "published");
-  const faq = homeFaq();
+  const upcoming = books.find((b) => b.status === "upcoming");
+  const preorder = books.find((b) => b.status === "upcoming" && b.preorderOpen);
+  const release = releaseLabel(upcoming?.releaseAt);
+  const faq = homeFaq(books, release);
 
   return (
     <>
@@ -106,21 +111,28 @@ export default function HomePage() {
           <div className="space-y-2 border bg-background px-6 py-4">
             <p className="text-sm font-medium text-primary">Next release</p>
             <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Books by Prasanth</h1>
-            <p className="text-muted-foreground">{RELEASE_LABEL}</p>
+            <p className="text-muted-foreground">{release}</p>
           </div>
 
-          <HeroClock />
+          <HeroClock target={upcoming?.releaseAt} />
 
-          {/* Inverted colours so the button stands out from the red noise */}
-          <Link
-            href="/login"
-            className={cn(
-              buttonVariants({ size: "lg" }),
-              "h-11 bg-foreground px-8 text-base text-background hover:bg-foreground/90"
-            )}
-          >
-            Pre-order now
-          </Link>
+          {/* Inverted colours so the button stands out from the red noise. It pre-orders the
+              specific upcoming book; with none open yet, it just says so. */}
+          {preorder ? (
+            <Link
+              href={`/books/${preorder.slug}/preorder`}
+              className={cn(
+                buttonVariants({ size: "lg" }),
+                "h-11 bg-foreground px-8 text-base text-background hover:bg-foreground/90"
+              )}
+            >
+              Pre-order now
+            </Link>
+          ) : (
+            <p className="border bg-background px-6 py-2.5 text-sm font-medium text-muted-foreground">
+              Pre-orders open soon
+            </p>
+          )}
         </section>
 
         {/* Below the hero: the books, in a row. */}

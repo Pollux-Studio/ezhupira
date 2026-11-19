@@ -2,7 +2,7 @@ import { Router } from "express";
 import rateLimit from "express-rate-limit";
 import mongoose from "mongoose";
 import { z } from "zod";
-import { KNOWN_BOOKS } from "../catalog.js";
+import { isKnownBook } from "../lib/books.js";
 import { requireAuth } from "../lib/auth.js";
 import { Review, User } from "../models.js";
 
@@ -36,7 +36,7 @@ const ownView = (r: ReviewRow) => ({
 /** Approved reviews for a book, newest first, with the average rating and each writer's avatar seed. */
 reviewsRouter.get("/reviews", async (req, res) => {
   const book = String(req.query.book ?? "");
-  if (!KNOWN_BOOKS.has(book)) return res.status(404).json({ error: "Unknown book." });
+  if (!(await isKnownBook(book))) return res.status(404).json({ error: "Unknown book." });
 
   const reviews = await Review.find({ bookSlug: book, approved: true })
     .sort({ createdAt: -1 })
@@ -79,7 +79,7 @@ const writeSchema = z.object({
 reviewsRouter.post("/reviews", requireAuth, writeLimit, async (req, res) => {
   const parsed = writeSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: parsed.error.issues[0]?.message ?? "Invalid review." });
-  if (!KNOWN_BOOKS.has(parsed.data.bookSlug)) return res.status(404).json({ error: "Unknown book." });
+  if (!(await isKnownBook(parsed.data.bookSlug))) return res.status(404).json({ error: "Unknown book." });
 
   const user = await User.findById(req.session!.userId).lean();
   if (!user) return res.status(401).json({ error: "Please sign in." });

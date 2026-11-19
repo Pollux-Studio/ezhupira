@@ -9,10 +9,10 @@ import { useSession } from "@/components/auth/session"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { FieldDescription } from "@/components/ui/field"
 
-/** Where to go after signing in: ?next=/some/path (same-site paths only), else the dashboard. */
+/** Where to go after signing in: ?next=/some/path (same-site paths only), else your profile. */
 function nextPath() {
   const next = new URLSearchParams(window.location.search).get("next")
-  return next && next.startsWith("/") && !next.startsWith("//") ? next : "/dashboard"
+  return next && next.startsWith("/") && !next.startsWith("//") ? next : "/profile"
 }
 
 function LoginCard() {
@@ -28,8 +28,8 @@ function LoginCard() {
   return (
     <Card>
       <CardHeader className="text-center">
-        <CardTitle>Sign in to pre-order</CardTitle>
-        <CardDescription>Use your Google account to reserve your copy and track your orders.</CardDescription>
+        <CardTitle>Sign in to Ezhupira</CardTitle>
+        <CardDescription>Use your Google account for your bookshelf, reviews, pre-orders and orders.</CardDescription>
       </CardHeader>
       <CardContent className="grid gap-4">
         {user === undefined ? (
