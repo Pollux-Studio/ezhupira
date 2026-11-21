@@ -100,52 +100,6 @@ importers:
         specifier: ^5
         version: 5.9.3
 
-  admin:
-    dependencies:
-      '@base-ui/react':
-        specifier: ^1.8.0
-        version: 1.8.0(@types/react@19.3.0)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
-      '@gsap/react':
-        specifier: ^2.1.2
-        version: 2.1.2(gsap@3.15.1)(react@19.2.8)
-      firebase:
-        specifier: 13.4.0
-        version: 13.4.0(@types/react@19.3.0)(next@16.3.6(@opentelemetry/api@1.10.0)(@types/node@20.19.43)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(react@19.2.8)
-      gsap:
-        specifier: ^3.15.0
-        version: 3.15.1
-      lucide-react:
-        specifier: ^1.76.0
-        version: 1.77.0(@types/react@19.3.0)(react@19.2.8)
-      next:
-        specifier: 16.3.6
-        version: 16.3.6(@opentelemetry/api@1.10.0)(@types/node@20.19.43)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
-      react:
-        specifier: 19.2.8
-        version: 19.2.8
-      react-dom:
-        specifier: 19.2.8
-        version: 19.2.8(react@19.2.8)
-    devDependencies:
-      '@tailwindcss/postcss':
-        specifier: '4'
-        version: 4.3.3
-      '@types/node':
-        specifier: '20'
-        version: 20.19.43
-      '@types/react':
-        specifier: '19'
-        version: 19.3.0
-      '@types/react-dom':
-        specifier: '19'
-        version: 19.3.0(@types/react@19.3.0)
-      tailwindcss:
-        specifier: '4'
-        version: 4.3.3
-      typescript:
-        specifier: '5'
-        version: 5.9.3
-
 packages:
 
   '@alloc/quick-lru@5.3.0':
@@ -2576,15 +2530,6 @@ packages:
     peerDependencies:
       react: ^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0
 
-  lucide-react@1.77.0:
-    resolution: {integrity: sha512-VS6sOi8ZUH1qm6swBL/tpI4xAhB6pFTdHvw3pfCJD+DaTJwpyynVzfOS6mdyMZ+OCdY/GMSQbqinOMOPbNSrQA==}
-    peerDependencies:
-      '@types/react': '*'
-      react: ^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0
-    peerDependenciesMeta:
-      '@types/react':
-        optional: true
-
   magic-string@0.30.21:
     resolution: {integrity: sha512-vd2F4YUyEXKGcLHoq+TEyCjxueSeHnFxyyjNp80yg0XV4vUhnDer/lvvlqM/arB5bXQN5K2/3oinyCRyx8T2CQ==}
 
@@ -3827,36 +3772,6 @@ snapshots:
     optionalDependencies:
       '@types/react': 19.3.0
       next: 16.3.6(@babel/core@7.29.7)(@opentelemetry/api@1.10.0)(@types/node@20.19.43)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
-      react: 19.2.8
-    transitivePeerDependencies:
-      - supports-color
-
-  '@firebase/crashlytics@0.2.0(@firebase/app-types@0.9.6)(@firebase/app@0.16.7)(@types/react@19.3.0)(next@16.3.6(@opentelemetry/api@1.10.0)(@types/node@20.19.43)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(react@19.2.8)':
-    dependencies:
-      '@firebase/app': 0.16.7
-      '@firebase/app-types': 0.9.6
-      '@firebase/component': 0.7.5
-      '@firebase/installations': 0.6.24(@firebase/app@0.16.7)
-      '@firebase/util': 1.15.3
-      '@opentelemetry/api': 1.10.0
-      '@opentelemetry/browser-instrumentation': 0.11.0(@opentelemetry/api@1.10.0)
-      '@opentelemetry/core': 3.1.1(@opentelemetry/api@1.10.0)
-      '@opentelemetry/exporter-logs-otlp-http': 0.301.2(@opentelemetry/api@1.10.0)
-      '@opentelemetry/exporter-trace-otlp-proto': 0.301.2(@opentelemetry/api@1.10.0)
-      '@opentelemetry/instrumentation': 0.301.2(@opentelemetry/api@1.10.0)
-      '@opentelemetry/instrumentation-document-load': 0.70.1(@opentelemetry/api@1.10.0)
-      '@opentelemetry/instrumentation-fetch': 0.301.2(@opentelemetry/api@1.10.0)
-      '@opentelemetry/instrumentation-xml-http-request': 0.301.2(@opentelemetry/api@1.10.0)
-      '@opentelemetry/otlp-exporter-base': 0.301.2(@opentelemetry/api@1.10.0)
-      '@opentelemetry/otlp-transformer': 0.301.2(@opentelemetry/api@1.10.0)
-      '@opentelemetry/resources': 3.1.1(@opentelemetry/api@1.10.0)
-      '@opentelemetry/sdk-logs': 3.1.1(@opentelemetry/api@1.10.0)
-      '@opentelemetry/sdk-trace': 3.1.1(@opentelemetry/api@1.10.0)
-      '@opentelemetry/semantic-conventions': 1.45.0
-      tslib: 2.8.1
-    optionalDependencies:
-      '@types/react': 19.3.0
-      next: 16.3.6(@opentelemetry/api@1.10.0)(@types/node@20.19.43)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       react: 19.2.8
     transitivePeerDependencies:
       - supports-color
@@ -5576,47 +5491,6 @@ snapshots:
       - react-router-dom
       - supports-color
 
-  firebase@13.4.0(@types/react@19.3.0)(next@16.3.6(@opentelemetry/api@1.10.0)(@types/node@20.19.43)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(react@19.2.8):
-    dependencies:
-      '@firebase/ai': 3.1.0(@firebase/app-types@0.9.6)(@firebase/app@0.16.7)
-      '@firebase/analytics': 0.10.26(@firebase/app@0.16.7)
-      '@firebase/analytics-compat': 0.2.32(@firebase/app-compat@0.5.23)(@firebase/app@0.16.7)
-      '@firebase/app': 0.16.7
-      '@firebase/app-check': 0.13.2(@firebase/app@0.16.7)
-      '@firebase/app-check-compat': 0.4.8(@firebase/app-compat@0.5.23)(@firebase/app@0.16.7)
-      '@firebase/app-compat': 0.5.23
-      '@firebase/app-types': 0.9.6
-      '@firebase/auth': 1.13.11(@firebase/app@0.16.7)
-      '@firebase/auth-compat': 0.6.16(@firebase/app-compat@0.5.23)(@firebase/app-types@0.9.6)(@firebase/app@0.16.7)
-      '@firebase/crashlytics': 0.2.0(@firebase/app-types@0.9.6)(@firebase/app@0.16.7)(@types/react@19.3.0)(next@16.3.6(@opentelemetry/api@1.10.0)(@types/node@20.19.43)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(react@19.2.8)
-      '@firebase/data-connect': 0.7.4(@firebase/app@0.16.7)
-      '@firebase/database': 1.1.6
-      '@firebase/database-compat': 2.1.8(@firebase/app-compat@0.5.23)(@firebase/app@0.16.7)
-      '@firebase/firestore': 4.20.0(@firebase/app@0.16.7)
-      '@firebase/firestore-compat': 0.4.18(@firebase/app-compat@0.5.23)(@firebase/app-types@0.9.6)(@firebase/app@0.16.7)
-      '@firebase/functions': 0.14.0(@firebase/app@0.16.7)
-      '@firebase/functions-compat': 0.5.0(@firebase/app-compat@0.5.23)(@firebase/app@0.16.7)
-      '@firebase/installations': 0.6.24(@firebase/app@0.16.7)
-      '@firebase/installations-compat': 0.2.24(@firebase/app-compat@0.5.23)(@firebase/app-types@0.9.6)(@firebase/app@0.16.7)
-      '@firebase/messaging': 0.13.3(@firebase/app@0.16.7)
-      '@firebase/messaging-compat': 0.2.30(@firebase/app-compat@0.5.23)(@firebase/app@0.16.7)
-      '@firebase/performance': 0.7.14(@firebase/app@0.16.7)
-      '@firebase/performance-compat': 0.2.27(@firebase/app-compat@0.5.23)(@firebase/app@0.16.7)
-      '@firebase/remote-config': 0.10.0(@firebase/app@0.16.7)
-      '@firebase/remote-config-compat': 0.2.31(@firebase/app-compat@0.5.23)(@firebase/app@0.16.7)
-      '@firebase/storage': 0.14.6(@firebase/app@0.16.7)
-      '@firebase/storage-compat': 0.4.6(@firebase/app-compat@0.5.23)(@firebase/app-types@0.9.6)(@firebase/app@0.16.7)
-      '@firebase/util': 1.15.3
-    transitivePeerDependencies:
-      - '@angular/core'
-      - '@angular/router'
-      - '@react-native-async-storage/async-storage'
-      - '@types/react'
-      - next
-      - react
-      - react-router-dom
-      - supports-color
-
   flat-cache@4.0.1:
     dependencies:
       flatted: 3.4.4
@@ -6098,12 +5972,6 @@ snapshots:
     dependencies:
       react: 19.2.8
 
-  lucide-react@1.77.0(@types/react@19.3.0)(react@19.2.8):
-    dependencies:
-      react: 19.2.8
-    optionalDependencies:
-      '@types/react': 19.3.0
-
   magic-string@0.30.21:
     dependencies:
       '@jridgewell/sourcemap-codec': 1.6.0
@@ -6174,32 +6042,6 @@ snapshots:
       react: 19.2.8
       react-dom: 19.2.8(react@19.2.8)
       styled-jsx: 5.1.6(@babel/core@7.29.7)(react@19.2.8)
-    optionalDependencies:
-      '@next/swc-darwin-arm64': 16.3.6
-      '@next/swc-darwin-x64': 16.3.6
-      '@next/swc-linux-arm64-gnu': 16.3.6
-      '@next/swc-linux-arm64-musl': 16.3.6
-      '@next/swc-linux-x64-gnu': 16.3.6
-      '@next/swc-linux-x64-musl': 16.3.6
-      '@next/swc-win32-arm64-msvc': 16.3.6
-      '@next/swc-win32-x64-msvc': 16.3.6
-      '@opentelemetry/api': 1.10.0
-      sharp: 0.35.4(@types/node@20.19.43)
-    transitivePeerDependencies:
-      - '@babel/core'
-      - '@types/node'
-      - babel-plugin-macros
-
-  next@16.3.6(@opentelemetry/api@1.10.0)(@types/node@20.19.43)(react-dom@19.2.8(react@19.2.8))(react@19.2.8):
-    dependencies:
-      '@next/env': 16.3.6
-      '@swc/helpers': 0.5.23
-      baseline-browser-mapping: 2.11.38
-      caniuse-lite: 1.0.30001826
-      postcss: 8.5.23
-      react: 19.2.8
-      react-dom: 19.2.8(react@19.2.8)
-      styled-jsx: 5.1.6(react@19.2.8)
     optionalDependencies:
       '@next/swc-darwin-arm64': 16.3.6
       '@next/swc-darwin-x64': 16.3.6
@@ -6789,11 +6631,6 @@ snapshots:
       react: 19.2.8
     optionalDependencies:
       '@babel/core': 7.29.7
-
-  styled-jsx@5.1.6(react@19.2.8):
-    dependencies:
-      client-only: 0.0.1
-      react: 19.2.8
 
   supports-color@7.2.0:
     dependencies:
