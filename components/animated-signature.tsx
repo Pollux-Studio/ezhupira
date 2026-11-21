@@ -16,7 +16,7 @@ const TOTAL_LENGTH = SIGNATURE_STROKES.reduce((sum, s) => sum + s.len, 0);
 const [VB_X, VB_Y, VB_W, VB_H] = SIGNATURE_VIEWBOX.split(" ").map(Number);
 
 /** Lay every stroke on one timeline in signing order; returns the strokes and total seconds. */
-function buildTimeline(drawSeconds: number, startDelay: number) {
+export function buildTimeline(drawSeconds: number, startDelay: number) {
   let cursor = startDelay;
   const strokes = SIGNATURE_STROKES.map((stroke, i) => {
     const prev = SIGNATURE_STROKES[i - 1];

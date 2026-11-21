@@ -28,6 +28,7 @@
     "@mapcn": "https://mapcn.dev/r/{name}.json",
     "@svgl": "https://svgl.app/r/{name}.json",
     "@ogimagecn": "https://ogimagecn.vercel.app/r/{name}.json",
-    "@flagcn": "https://flagcn.dev/r/{name}.json"
+    "@flagcn": "https://flagcn.dev/r/{name}.json",
+    "@remocn": "https://www.remocn.dev/r/{name}.json"
   }
 }
