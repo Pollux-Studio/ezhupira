@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
-import type { Book, Publisher } from "@/lib/books";
+import { sellsHere, type Book, type Publisher } from "@/lib/books";
 import { cn } from "@/lib/utils";
 
 /**
@@ -68,12 +68,15 @@ export function PublisherBadge({ publisher, className }: { publisher: Publisher;
   );
 }
 
-/** Where a book is bought: its own pre-order page while upcoming, else the external store. */
+/**
+ * Where a book is bought: its own checkout page while upcoming or on sale here, else the
+ * external store.
+ */
 export function BuyButton({ book, className }: { book: Book; className?: string }) {
-  if (book.status === "upcoming") {
+  if (book.status === "upcoming" || sellsHere(book)) {
     return (
       <Link href={`/books/${book.slug}/preorder`} className={cn(buttonVariants({ size: "lg" }), "gap-1.5", className)}>
-        Pre-order
+        {book.status === "upcoming" ? "Pre-order" : "Buy now"}
       </Link>
     );
   }

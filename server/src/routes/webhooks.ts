@@ -20,7 +20,8 @@ webhooksRouter.post("/cashfree", express.raw({ type: "*/*", limit: "1mb" }), asy
   }
   if (!orderId) return res.json({ ok: true, ignored: true }); // e.g. a test ping
 
-  const order = (await Order.findOne({ code: orderId })) as OrderDoc | null;
+  // New orders are known to Cashfree by cashfree.ref; older ones by their code.
+  const order = (await Order.findOne({ $or: [{ "cashfree.ref": orderId }, { code: orderId }] })) as OrderDoc | null;
   if (!order) return res.json({ ok: true, ignored: true });
 
   try {

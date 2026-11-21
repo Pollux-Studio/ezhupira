@@ -1,10 +1,10 @@
 import Link from "next/link";
-import { Feather, LifeBuoy, PackageSearch } from "lucide-react";
+import { CircleHelp, Feather, LifeBuoy, PackageSearch } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 
-/** Site footer: copyright on the left; About the author, Track order and Support on the right. */
+/** Site footer: copyright on the left; About the author, FAQ, Track order and Support on the right. */
 export function SiteFooter({ className }: { className?: string }) {
   const link = cn(buttonVariants({ variant: "ghost", size: "sm" }), "gap-1.5 text-muted-foreground hover:text-foreground");
 
@@ -17,6 +17,10 @@ export function SiteFooter({ className }: { className?: string }) {
           <Link href="/author" className={link}>
             <Feather aria-hidden />
             About the author
+          </Link>
+          <Link href="/faq" className={link}>
+            <CircleHelp aria-hidden />
+            FAQ
           </Link>
           <Link href="/track-order" className={link}>
             <PackageSearch aria-hidden />

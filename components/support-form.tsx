@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { api } from "@/lib/api";
 
@@ -87,23 +88,35 @@ export function SupportForm() {
               </Field>
               <Field>
                 <FieldLabel htmlFor="email">Email</FieldLabel>
-                <Input id="email" name="email" type="email" autoComplete="email" defaultValue={user?.email} key={`e-${user?.id}`} required />
+                {/* Signed in: replies go to the account's email, so it isn't editable. */}
+                <Input
+                  id="email"
+                  name="email"
+                  type="email"
+                  autoComplete="email"
+                  defaultValue={user?.email}
+                  key={`e-${user?.id}`}
+                  readOnly={!!user?.email}
+                  aria-readonly={!!user?.email}
+                  className="read-only:cursor-not-allowed read-only:opacity-60"
+                  required
+                />
               </Field>
             </div>
             <Field>
               <FieldLabel htmlFor="topic">What is it about?</FieldLabel>
-              <select
-                id="topic"
-                value={topic}
-                onChange={(e) => setTopic(e.target.value)}
-                className="h-9 rounded-md border border-input bg-transparent px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
-              >
-                {TOPICS.map((t) => (
-                  <option key={t.value} value={t.value}>
-                    {t.label}
-                  </option>
-                ))}
-              </select>
+              <Select items={TOPICS} value={topic} onValueChange={(v) => v && setTopic(v)}>
+                <SelectTrigger id="topic" className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {TOPICS.map((t) => (
+                    <SelectItem key={t.value} value={t.value}>
+                      {t.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </Field>
             {(topic === "order" || topic === "payment") && (
               <Field>

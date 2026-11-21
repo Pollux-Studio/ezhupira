@@ -18,8 +18,20 @@ const U_SIGN: Record<string, string> = {
   க: "F", ச: "R", ட: "L", ண: "Z", த: "J", ந: "E", ப: "G", ம: "K",
   ய: "A", ர: "U", ல: "Y", வ: "T", ழ: "O", ள: "S", ற: "W", ன: "D",
 };
-/** Consonant + ூ glyphs confirmed in the font. */
-const UU_SIGN: Record<string, string> = { க: "$", ச: "#", ம: "%", ர: "&" };
+/** Consonant + ூ: own glyph, or the ு glyph plus the "+" tail. All checked in the font. */
+const UU_SIGN: Record<string, string> = {
+  க: "$", ச: "#", ட: "^", ப: "\xa9", ம: "%", ய: "\xc2", ர: "&", ழ: "*",
+  ண: "Z+", த: "J+", ந: "E+", ல: "Y+", வ: "T+", ள: "S+", ற: "W+", ன: "D+",
+};
+// Grantha letters (and ங ஞ) take separate ு / ூ signs after the consonant.
+for (const c of "ஙஞஜஷஸஹ") {
+  U_SIGN[c] = CONSONANTS[c] + "{";
+  UU_SIGN[c] = CONSONANTS[c] + "_";
+}
+/** டி and டீ are single glyphs, not ட + the sign. */
+const LIGATURE_SIGN: Record<string, string> = { "டி": "b", "டீ": "B" };
+const SRI = "ஸ்ரீ"; // one glyph: "="
+const KSSA = "க்ஷ"; // one glyph "~", takes vowel signs like a consonant
 const AFTER: Record<string, string> = { "ா": "h", "ி": "p", "ீ": "P", "்": ";" };
 const BEFORE: Record<string, string> = { "ெ": "n", "ே": "N", "ை": "i" };
 const SPLIT: Record<string, [string, string]> = { "ொ": ["n", "h"], "ோ": ["N", "h"], "ௌ": ["n", "s"] };
@@ -36,11 +48,24 @@ export function toMallikai(text: string): string {
   const chars = [...text];
   let out = "";
   for (let i = 0; i < chars.length; i++) {
-    const ch = chars[i]!;
+    const rest = chars.slice(i, i + 4).join("");
+    if (rest.startsWith(SRI)) {
+      out += "=";
+      i += [...SRI].length - 1;
+      continue;
+    }
+    let ch = chars[i]!;
+    if (rest.startsWith(KSSA)) {
+      ch = KSSA; // treat as one consonant
+      i += [...KSSA].length - 1;
+    }
     const next = chars[i + 1] ?? "";
-    if (ch in CONSONANTS) {
-      const base = CONSONANTS[ch]!;
-      if (next === "ு") {
+    if (ch === KSSA || ch in CONSONANTS) {
+      const base = ch === KSSA ? "~" : CONSONANTS[ch]!;
+      if (ch + next in LIGATURE_SIGN) {
+        out += LIGATURE_SIGN[ch + next];
+        i++;
+      } else if (next === "ு") {
         if (!(ch in U_SIGN)) throw new Error(`no Mallikai glyph for ${ch}ு`);
         out += U_SIGN[ch];
         i++;

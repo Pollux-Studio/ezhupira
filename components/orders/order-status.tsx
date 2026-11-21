@@ -1,10 +1,16 @@
 import { Badge } from "@/components/ui/badge";
-import { ORDER_STATUS_LABEL, type OrderEvent, type OrderStatus } from "@/lib/api";
+import { ORDER_STATUS_LABEL, type Order, type OrderEvent, type OrderStatus } from "@/lib/api";
 
 const date = (iso: string) =>
   new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Kolkata" }).format(new Date(iso));
 
-export function StatusBadge({ status }: { status: OrderStatus }) {
+/**
+ * Order status badge. Pass `payment` (from an unpaid order) so a failed attempt reads
+ * "Payment failed" rather than "Awaiting payment"; the order itself stays open for a retry.
+ */
+export function StatusBadge({ status, payment }: { status: OrderStatus; payment?: Order["payment"] }) {
+  if (status === "pending" && payment === "failed") return <Badge variant="destructive">Payment failed</Badge>;
+  if (status === "pending" && payment === "processing") return <Badge variant="outline">Processing</Badge>;
   const variant = status === "failed" || status === "cancelled" ? "destructive" : status === "pending" ? "outline" : "default";
   return <Badge variant={variant}>{ORDER_STATUS_LABEL[status]}</Badge>;
 }

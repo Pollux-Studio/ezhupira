@@ -27,8 +27,19 @@ U_SIGN = {
     "க": "F", "ச": "R", "ட": "L", "ண": "Z", "த": "J", "ந": "E", "ப": "G", "ம": "K",
     "ய": "A", "ர": "U", "ல": "Y", "வ": "T", "ழ": "O", "ள": "S", "ற": "W", "ன": "D",
 }
-# Consonant + ூ glyphs confirmed in the font.
-UU_SIGN = {"க": "$", "ச": "#", "ம": "%", "ர": "&"}
+# Consonant + ூ: own glyph, or the ு glyph plus the "+" tail. All checked in the font.
+UU_SIGN = {
+    "க": "$", "ச": "#", "ட": "^", "ப": "\xa9", "ம": "%", "ய": "\xc2", "ர": "&", "ழ": "*",
+    "ண": "Z+", "த": "J+", "ந": "E+", "ல": "Y+", "வ": "T+", "ள": "S+", "ற": "W+", "ன": "D+",
+}
+# Grantha letters (and ங ஞ) take separate ு / ூ signs after the consonant.
+for _c in "ஙஞஜஷஸஹ":
+    U_SIGN[_c] = CONSONANTS[_c] + "{"
+    UU_SIGN[_c] = CONSONANTS[_c] + "_"
+# டி and டீ are single glyphs, not ட + the sign.
+LIGATURE_SIGN = {("ட", "ி"): "b", ("ட", "ீ"): "B"}
+SRI = "ஸ்ரீ"         # one glyph: "="
+KSSA = "க்ஷ"         # one glyph "~", takes vowel signs like a consonant
 AFTER = {"ா": "h", "ி": "p", "ீ": "P", "்": ";"}       # signs drawn after the consonant
 BEFORE = {"ெ": "n", "ே": "N", "ை": "i"}                # signs drawn before it
 SPLIT = {"ொ": ("n", "h"), "ோ": ("N", "h"), "ௌ": ("n", "s")}  # before + after
@@ -41,10 +52,16 @@ def to_mallikai(text: str) -> str:
     out = []
     i = 0
     while i < len(text):
+        if text.startswith(SRI, i):
+            out.append("="); i += len(SRI); continue
         ch = text[i]
+        if text.startswith(KSSA, i):
+            ch, i = KSSA, i + len(KSSA) - 1  # treat as one consonant
         nxt = text[i + 1] if i + 1 < len(text) else ""
-        if ch in CONSONANTS:
-            base = CONSONANTS[ch]
+        if ch == KSSA or ch in CONSONANTS:
+            base = "~" if ch == KSSA else CONSONANTS[ch]
+            if (ch, nxt) in LIGATURE_SIGN:
+                out.append(LIGATURE_SIGN[(ch, nxt)]); i += 2; continue
             if nxt == "ு":
                 if ch not in U_SIGN:
                     raise ValueError(f"no Mallikai glyph for {ch}ு")

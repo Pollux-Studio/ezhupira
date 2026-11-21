@@ -1,11 +1,12 @@
 import { Router } from "express";
 import rateLimit from "express-rate-limit";
 import { z } from "zod";
+import { rememberAddress } from "../lib/addresses.js";
 import { findEdition, listPublicBooks } from "../lib/books.js";
 import { env } from "../env.js";
 import { requireAuth } from "../lib/auth.js";
 import { createOrder, getOrder, normalizePhone } from "../lib/cashfree.js";
-import { ownerView, syncFromCashfree, trackingView } from "../lib/orders.js";
+import { cashfreeRef, newCashfreeRef, ownerView, syncFromCashfree, trackingView } from "../lib/orders.js";
 import { nextOrderCode, Order, User, type OrderDoc } from "../models.js";
 
 export const ordersRouter = Router();
@@ -57,7 +58,7 @@ ordersRouter.post("/orders", requireAuth, checkoutLimit, async (req, res) => {
   if (found.edition.needsAddress && !address) return res.status(400).json({ error: "Please add a shipping address." });
 
   const phone = normalizePhone(parsed.data.phone);
-  if (!phone) return res.status(400).json({ error: "Enter a valid 10-digit Indian mobile number." });
+  if (!phone) return res.status(400).json({ error: "Enter a valid mobile number, with the right country code." });
 
   const user = await User.findById(req.session!.userId);
   if (!user) return res.status(401).json({ error: "Please sign in." });
@@ -73,15 +74,23 @@ ordersRouter.post("/orders", requireAuth, checkoutLimit, async (req, res) => {
     shippingAddress: found.edition.needsAddress ? address : undefined,
     events: [{ status: "pending", note: "Order placed, awaiting payment" }],
   });
+  const ref = newCashfreeRef(order.code);
+
+  // Save the shipping address to the reader's address book for next time. A problem here
+  // must never stop the order.
+  if (order.shippingAddress && address) {
+    await rememberAddress(user.id, { name, phone, ...address }).catch((err) => console.error(`Saving address for ${order.code} failed:`, err));
+  }
 
   try {
     const cf = await createOrder({
-      orderId: order.code,
+      orderId: ref,
+      code: order.code,
       amount: order.amount,
       customer: { id: user._id.toString(), name, email: user.email, phone },
       note: `${found.book.title} · ${found.edition.name}`,
     });
-    order.cashfree = { orderId: String(cf.cf_order_id), paymentSessionId: cf.payment_session_id };
+    order.cashfree = { ref, orderId: String(cf.cf_order_id), paymentSessionId: cf.payment_session_id };
     await order.save();
     res.status(201).json({ code: order.code, paymentSessionId: cf.payment_session_id, cashfreeMode: env.CASHFREE_ENV });
   } catch (err) {
@@ -122,7 +131,7 @@ ordersRouter.post("/orders/:code/pay", requireAuth, checkoutLimit, async (req, r
   const order = await loadOwnOrder(String(req.params.code), req.session!);
   if (!order) return res.status(404).json({ error: "Order not found." });
   if (order.status !== "pending") return res.status(409).json({ error: `This order is ${order.status}.` });
-  const cf = await getOrder(order.code);
+  const cf = await getOrder(cashfreeRef(order));
   if (cf.order_status !== "ACTIVE") {
     await syncFromCashfree(order);
     return res.status(409).json({ error: "This payment window has closed. Please place a new order." });

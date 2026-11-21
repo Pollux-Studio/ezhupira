@@ -1,9 +1,9 @@
 // Content for /llms.txt and /llms-full.txt (https://llmstxt.org): a plain-Markdown map of
 // the site for AI assistants and answer engines. Built from the same data as the pages.
 import { AUTHOR_BIO_EN, AUTHOR_BIO_TA } from "@/lib/author";
-import { formatPrice, type Book } from "@/lib/books";
+import { formatPrice, isTestBook, nextUpcoming, type Book } from "@/lib/books";
 import { releaseLabel } from "@/lib/release";
-import { AUTHOR, SITE, SITE_URL, abs, bookTitleLatin, homeFaq } from "@/lib/site";
+import { AUTHOR, SITE, SITE_URL, abs, bookTitleLatin, faqSections } from "@/lib/site";
 
 const bookLine = (b: Book) => {
   const latin = bookTitleLatin(b);
@@ -11,8 +11,9 @@ const bookLine = (b: Book) => {
   return `- [${b.title}${latin ? ` (${latin})` : ""}](${abs(`/books/${b.slug}`)}): ${bits.join(", ")}. ${b.description}`;
 };
 
-export function llmsTxt(books: Book[]) {
-  const release = releaseLabel(books.find((b) => b.status === "upcoming")?.releaseAt);
+export function llmsTxt(allBooks: Book[]) {
+  const books = allBooks.filter((b) => !isTestBook(b));
+  const release = releaseLabel(nextUpcoming(books)?.releaseAt);
   return `# ${SITE.name} (${SITE.nameTa})
 
 > ${SITE.description}
@@ -26,6 +27,7 @@ ${books.map(bookLine).join("\n")}
 ## About
 
 - [About the author](${AUTHOR.url}): biography of ${AUTHOR.name} in Tamil and English, with Instagram and podcast links.
+- [FAQ](${abs("/faq")}): questions about Ezhupira, payments, cancellations, refunds and delivery.
 - [Track order](${abs("/track-order")}): check the status of a pre-order.
 
 ## Optional
@@ -36,7 +38,8 @@ ${books.map(bookLine).join("\n")}
 `;
 }
 
-export function llmsFullTxt(books: Book[]) {
+export function llmsFullTxt(allBooks: Book[]) {
+  const books = allBooks.filter((b) => !isTestBook(b));
   const bookSection = (b: Book) => {
     const latin = bookTitleLatin(b);
     const facts = [
@@ -71,8 +74,8 @@ ${books.map(bookSection).join("\n\n")}
 
 ## Frequently asked questions
 
-${homeFaq(books)
-  .map(({ q, a }) => `### ${q}\n\n${a}`)
+${faqSections(books)
+  .map((s) => `### ${s.title}\n\n${s.items.map(({ q, a }) => `#### ${q}\n\n${a}`).join("\n\n")}`)
   .join("\n\n")}
 `;
 }

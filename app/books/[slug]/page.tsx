@@ -17,7 +17,7 @@ import { SiteHeader } from "@/components/site-header";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { JsonLd } from "@/components/json-ld";
-import { formatPrice, type Book } from "@/lib/books";
+import { formatPrice, isTestBook, type Book } from "@/lib/books";
 import { getBook, getBooks } from "@/lib/catalog";
 import { AUTHOR, bookLd, bookTitleLatin, breadcrumbLd } from "@/lib/site";
 import { cn } from "@/lib/utils";
@@ -44,6 +44,8 @@ export async function generateMetadata({
       (k): k is string => Boolean(k),
     ),
     alternates: { canonical: path },
+    // Dummy products for testing payments stay out of search.
+    robots: isTestBook(book) ? { index: false, follow: false } : undefined,
     openGraph: {
       type: "book",
       url: path,

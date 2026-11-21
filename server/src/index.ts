@@ -7,6 +7,7 @@ import mongoose from "mongoose";
 import { allowedOrigins, env, isProd } from "./env.js";
 import { readSession } from "./lib/auth.js";
 import { seedBooks } from "./lib/books.js";
+import { addressesRouter } from "./routes/addresses.js";
 import { adminRouter } from "./routes/admin.js";
 import { authRouter } from "./routes/auth.js";
 import { ordersRouter } from "./routes/orders.js";
@@ -51,6 +52,7 @@ app.use("/auth", authRouter);
 app.use("/", ordersRouter);
 app.use("/", reviewsRouter);
 app.use("/me/shelf", shelfRouter);
+app.use("/me/addresses", addressesRouter);
 app.use("/", supportRouter);
 app.use("/admin", adminRouter);
 

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { MessageSquarePlus } from "lucide-react";
+import { CircleHelp, MessageSquarePlus } from "lucide-react";
 import { BookCover, BuyButton, MallikaiText, PublisherBadge } from "@/components/book/book-parts";
 import { HeroBackground } from "@/components/hero-background";
 import { HeroClock } from "@/components/hero-clock";
@@ -9,12 +9,12 @@ import { SiteHeader } from "@/components/site-header";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { formatPrice, type Book } from "@/lib/books";
+import { formatPrice, isTestBook, nextUpcoming, openPreorder, type Book } from "@/lib/books";
 import { getBooks } from "@/lib/catalog";
 import { releaseLabel } from "@/lib/release";
 import { cn } from "@/lib/utils";
 import { JsonLd } from "@/components/json-ld";
-import { abs, bookLd, faqLd, homeFaq } from "@/lib/site";
+import { abs, bookLd } from "@/lib/site";
 
 export const metadata: Metadata = {
   alternates: { canonical: "/" },
@@ -82,22 +82,23 @@ function BookCard({ book }: { book: Book }) {
 export default async function HomePage() {
   const books = await getBooks();
   const published = books.filter((b) => b.status === "published");
-  const upcoming = books.find((b) => b.status === "upcoming");
-  const preorder = books.find((b) => b.status === "upcoming" && b.preorderOpen);
+  const upcoming = nextUpcoming(books);
+  const preorder = openPreorder(books);
+  // Test books are listed whatever their status, so the pre-order one can be reached too.
+  const listed = books.filter((b) => b.status === "published" || isTestBook(b));
   const release = releaseLabel(upcoming?.releaseAt);
-  const faq = homeFaq(books, release);
+  const real = books.filter((b) => !isTestBook(b));
 
   return (
     <>
       <JsonLd
         data={[
-          faqLd(faq),
           {
             "@type": "ItemList",
             name: "Books by Prasanth J",
-            itemListElement: books.map((b, i) => ({ "@type": "ListItem", position: i + 1, url: abs(`/books/${b.slug}`) })),
+            itemListElement: real.map((b, i) => ({ "@type": "ListItem", position: i + 1, url: abs(`/books/${b.slug}`) })),
           },
-          ...published.map(bookLd),
+          ...published.filter((b) => !isTestBook(b)).map(bookLd),
         ]}
       />
       <SiteHeader />
@@ -139,27 +140,21 @@ export default async function HomePage() {
         <main className="flex-1 space-y-4 py-12">
           <h2 className="text-lg font-semibold">Books</h2>
           <div className="grid items-start gap-4 lg:grid-cols-2">
-            {published.map((book) => (
+            {listed.map((book) => (
               <BookCard key={book.slug} book={book} />
             ))}
           </div>
 
-          {/* Plain answers to common questions; also sent to search as FAQPage data. */}
-          <section aria-labelledby="faq-heading" className="space-y-4 pt-12">
-            <h2 id="faq-heading" className="text-lg font-semibold">
-              Questions about Ezhupira
-            </h2>
-            <div className="divide-y border">
-              {faq.map(({ q, a }) => (
-                <details key={q} className="group px-4 py-3">
-                  <summary className="cursor-pointer list-none font-medium marker:hidden [&::-webkit-details-marker]:hidden">
-                    <span className="mr-2 inline-block text-primary transition-transform group-open:rotate-45">+</span>
-                    {q}
-                  </summary>
-                  <p className="pt-2 pl-6 text-sm leading-relaxed text-muted-foreground">{a}</p>
-                </details>
-              ))}
+          {/* The questions live on /faq; this just points there. */}
+          <section className="flex flex-col items-start gap-3 border p-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="space-y-1">
+              <h2 className="font-semibold">Questions?</h2>
+              <p className="text-sm text-muted-foreground">About Ezhupira, payments, refunds and delivery.</p>
             </div>
+            <Link href="/faq" className={cn(buttonVariants({ variant: "outline" }), "gap-1.5")}>
+              <CircleHelp aria-hidden />
+              Read the FAQ
+            </Link>
           </section>
         </main>
 

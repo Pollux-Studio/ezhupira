@@ -1,5 +1,5 @@
 // Small UI kit for the admin, styled with the site's paper + red tokens (app/globals.css).
-import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode, SelectHTMLAttributes, TextareaHTMLAttributes } from "react";
+import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode, TextareaHTMLAttributes } from "react";
 
 export const cx = (...c: (string | false | null | undefined)[]) => c.filter(Boolean).join(" ");
 
@@ -46,7 +46,6 @@ export const Input = ({ className, ...p }: InputHTMLAttributes<HTMLInputElement>
 export const Textarea = ({ className, ...p }: TextareaHTMLAttributes<HTMLTextAreaElement>) => (
   <textarea {...p} className={cx(field, "py-2 leading-relaxed", className)} />
 );
-export const Select = ({ className, ...p }: SelectHTMLAttributes<HTMLSelectElement>) => <select {...p} className={cx(field, "h-9", className)} />;
 
 export function Field({ label, hint, children, className }: { label: string; hint?: ReactNode; children: ReactNode; className?: string }) {
   return (

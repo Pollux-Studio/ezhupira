@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState, type FormEvent } from "react";
-import { Button, Card, Empty, ErrorNote, Input, Loading, OrderStatusBadge, PageHeader, Select } from "@/components/ui";
+import { Button, Card, Empty, ErrorNote, Input, Loading, OrderStatusBadge, PageHeader } from "@/components/ui";
+import { Select } from "@/components/select";
 import { api, ORDER_STATUSES, type Order } from "@/lib/api";
 import { dateTime, inr } from "@/lib/format";
 
@@ -43,14 +44,13 @@ function OrdersList() {
     <>
       <PageHeader title="Orders" description="Every order placed through Ezhupira's checkout." />
       <div className="mb-4 flex flex-wrap gap-2">
-        <Select value={status} onChange={(e) => setFilter({ status: e.target.value })} className="w-44" aria-label="Status">
-          <option value="">All statuses</option>
-          {ORDER_STATUSES.map((s) => (
-            <option key={s} value={s}>
-              {s}
-            </option>
-          ))}
-        </Select>
+        <Select
+          value={status || "all"}
+          onValueChange={(v) => setFilter({ status: v === "all" ? "" : v })}
+          options={[{ value: "all", label: "All statuses" }, ...ORDER_STATUSES.map((s) => ({ value: s, label: s }))]}
+          className="w-44"
+          aria-label="Status"
+        />
         <form onSubmit={search} className="flex flex-1 gap-2">
           <Input name="q" defaultValue={q} key={q} placeholder="Search order ID, name, email or phone" className="min-w-48 flex-1" />
           <Button type="submit" variant="outline">

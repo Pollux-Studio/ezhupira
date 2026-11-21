@@ -25,12 +25,13 @@ supportRouter.post("/support", limit, async (req, res) => {
   if (!parsed.success) return res.status(400).json({ error: parsed.error.issues[0]?.message ?? "Invalid message." });
   const { name, email, topic, orderCode, subject, message } = parsed.data;
 
-  const user = req.session ? await User.findById(req.session.userId, { _id: 1 }).lean() : null;
+  // Signed-in readers can't change their email on the form; replies go to the account's address.
+  const user = req.session ? await User.findById(req.session.userId, { _id: 1, email: 1 }).lean() : null;
   const ticket = await Ticket.create({
     code: await nextTicketCode(),
     user: user?._id,
     name,
-    email,
+    email: user?.email ?? email,
     topic,
     orderCode: orderCode ? orderCode.toUpperCase() : undefined,
     subject,

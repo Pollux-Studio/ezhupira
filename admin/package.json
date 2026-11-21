@@ -10,6 +10,7 @@
   },
   "packageManager": "pnpm@10.8.1",
   "dependencies": {
+    "@base-ui/react": "^1.8.0",
     "@gsap/react": "^2.1.2",
     "firebase": "13.4.0",
     "gsap": "^3.15.0",

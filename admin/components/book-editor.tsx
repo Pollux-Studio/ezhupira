@@ -2,7 +2,8 @@
 
 import { Plus, Trash2 } from "lucide-react";
 import { useState, type FormEvent, type ReactNode } from "react";
-import { Button, Card, ErrorNote, Field, Input, Select, Textarea, cx } from "@/components/ui";
+import { Button, Card, ErrorNote, Field, Input, Textarea, cx } from "@/components/ui";
+import { Select } from "@/components/select";
 import type { Book, Edition } from "@/lib/api";
 
 export type BookInput = Omit<Book, "titleMallikai" | "authorMallikai" | "updatedAt" | "details"> & {
@@ -133,11 +134,15 @@ export function BookEditor({
             />
           </Field>
           <Field label="Status" hint="Hidden books don't appear on the site.">
-            <Select value={b.status} onChange={(e) => set("status", e.target.value as Book["status"])}>
-              <option value="upcoming">Upcoming</option>
-              <option value="published">Published</option>
-              <option value="hidden">Hidden</option>
-            </Select>
+            <Select
+              value={b.status}
+              onValueChange={(v) => set("status", v as Book["status"])}
+              options={[
+                { value: "upcoming", label: "Upcoming" },
+                { value: "published", label: "Published" },
+                { value: "hidden", label: "Hidden" },
+              ]}
+            />
           </Field>
           <Field label="Year">
             <Input value={b.year} onChange={(e) => set("year", e.target.value)} maxLength={10} />

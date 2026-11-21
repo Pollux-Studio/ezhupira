@@ -7,7 +7,7 @@ import { requireAdmin, requireAuth } from "../lib/auth.js";
 import { publicBook, withMallikai, type BookRecord } from "../lib/books.js";
 import { getOrder, getPayments } from "../lib/cashfree.js";
 import { sendStatusUpdate, sendTicketReply } from "../lib/mail.js";
-import { syncFromCashfree } from "../lib/orders.js";
+import { cashfreeRef, syncFromCashfree } from "../lib/orders.js";
 import { revalidateWebsite } from "../lib/revalidate.js";
 import { BOOK_STATUSES, Book, ORDER_STATUSES, Order, Review, TICKET_STATUSES, Ticket, User, type OrderDoc } from "../models.js";
 
@@ -86,9 +86,11 @@ adminRouter.get("/orders/:code", async (req, res) => {
 /** Live payment attempts from Cashfree for one order (method, status, amount, time). */
 adminRouter.get("/orders/:code/payments", async (req, res) => {
   const code = String(req.params.code).toUpperCase();
-  if (!(await Order.exists({ code }))) return res.status(404).json({ error: "Order not found." });
+  const order = await Order.findOne({ code }, { code: 1, cashfree: 1 }).lean();
+  if (!order) return res.status(404).json({ error: "Order not found." });
+  const ref = cashfreeRef(order as OrderDoc);
   try {
-    const [cfOrder, payments] = await Promise.all([getOrder(code), getPayments(code)]);
+    const [cfOrder, payments] = await Promise.all([getOrder(ref), getPayments(ref)]);
     res.json({ orderStatus: cfOrder.order_status, payments });
   } catch (err) {
     res.status(502).json({ error: (err as Error).message });

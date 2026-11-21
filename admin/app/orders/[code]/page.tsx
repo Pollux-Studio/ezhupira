@@ -4,7 +4,8 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { ArrowLeft, RefreshCw } from "lucide-react";
 import { useCallback, useEffect, useState, type FormEvent } from "react";
-import { Button, Card, ErrorNote, Field, Input, Loading, OrderStatusBadge, PageHeader, Select } from "@/components/ui";
+import { Button, Card, ErrorNote, Field, Input, Loading, OrderStatusBadge, PageHeader } from "@/components/ui";
+import { Select } from "@/components/select";
 import { api, ORDER_STATUSES, type Order, type OrderStatus } from "@/lib/api";
 import { dateTime, inr } from "@/lib/format";
 
@@ -176,13 +177,12 @@ export default function OrderDetail() {
           <h2 className="mb-3 font-semibold">Update status</h2>
           <form onSubmit={update} className="grid gap-4">
             <Field label="New status">
-              <Select name="status" defaultValue={NEXT[order.status] ?? order.status} key={order.status}>
-                {ORDER_STATUSES.map((s) => (
-                  <option key={s} value={s}>
-                    {s}
-                  </option>
-                ))}
-              </Select>
+              <Select
+                name="status"
+                defaultValue={NEXT[order.status] ?? order.status}
+                key={order.status}
+                options={ORDER_STATUSES.map((s) => ({ value: s, label: s }))}
+              />
             </Field>
             <Field label="Note" hint="Shown to the customer, e.g. “DTDC tracking 1234567890”.">
               <Input name="note" maxLength={500} />

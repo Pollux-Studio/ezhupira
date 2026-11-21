@@ -100,6 +100,18 @@ export const fallbackBooks: Book[] = [
   },
 ];
 
+/** Sold through Ezhupira's own checkout (open, with at least one priced edition). */
+export const sellsHere = (book: Book) => !!book.preorderOpen && !!book.editions?.some((e) => e.price > 0);
+
+/** Dummy products for testing payments (slug starts with "test-"); kept out of search and the FAQ. */
+export const isTestBook = (book: Pick<Book, "slug">) => book.slug.startsWith("test-");
+
+/** The next real upcoming book (for the countdown and release date); test books never count. */
+export const nextUpcoming = (books: Book[]) => books.find((b) => b.status === "upcoming" && !isTestBook(b));
+
+/** The real upcoming book open for pre-order, if any (the home and profile "Pre-order now"). */
+export const openPreorder = (books: Book[]) => books.find((b) => b.status === "upcoming" && b.preorderOpen && !isTestBook(b));
+
 export function formatPrice(price: NonNullable<Book["price"]>) {
   const amount = new Intl.NumberFormat("en-IN", {
     style: "currency",

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { ProfilePage } from "@/components/profile/profile-page";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
+import { nextUpcoming } from "@/lib/books";
 import { getBooks } from "@/lib/catalog";
 import { releaseLabel } from "@/lib/release";
 
@@ -12,7 +13,7 @@ export const metadata: Metadata = {
 
 export default async function Profile() {
   const books = await getBooks();
-  const upcoming = books.find((b) => b.status === "upcoming");
+  const upcoming = nextUpcoming(books);
   return (
     <>
       <SiteHeader />

@@ -7,6 +7,26 @@ import { AnimatedSignature } from "@/components/animated-signature";
 /** How long the finished signature stays before the site appears. */
 const HOLD_SECONDS = 0.25;
 
+const PRELOADED_EVENT = "ezhupira:preloaded";
+
+function markPreloaded() {
+  document.documentElement.dataset.preloaded = "true";
+  window.dispatchEvent(new Event(PRELOADED_EVENT));
+}
+
+/**
+ * Runs `fn` once the preloader has faded out (at once if it's already gone or not on the
+ * page), so things like the order page's confetti aren't hidden behind it. Returns a cleanup.
+ */
+export function afterPreloader(fn: () => void) {
+  if (document.documentElement.dataset.preloaded || !document.querySelector(".signature-preloader")) {
+    fn();
+    return () => {};
+  }
+  window.addEventListener(PRELOADED_EVENT, fn, { once: true });
+  return () => window.removeEventListener(PRELOADED_EVENT, fn);
+}
+
 /**
  * Full-screen preloader: the signature writes itself, then the site fades in once the
  * page has loaded too.
@@ -41,7 +61,7 @@ export function SignaturePreloader() {
   }, [visible]);
 
   return (
-    <AnimatePresence>
+    <AnimatePresence onExitComplete={markPreloaded}>
       {visible && (
         <motion.div
           key="signature-preloader"

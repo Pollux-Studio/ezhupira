@@ -81,7 +81,23 @@ export type Order = {
   events: OrderEvent[];
   createdAt: string;
   paidAt?: string;
+  /** For unpaid orders: the last payment attempt failed, or is still processing at the bank. */
+  payment?: "failed" | "processing";
 };
+
+/** An entry in the reader's address book (/me/addresses). */
+export type SavedAddress = {
+  id: string;
+  name: string;
+  phone: string;
+  line1: string;
+  line2?: string;
+  city: string;
+  state: string;
+  pincode: string;
+  isDefault: boolean;
+};
+export type AddressInput = Omit<SavedAddress, "id" | "isDefault">;
 
 export type CatalogEdition = { id: "hardcopy" | "ebook"; name: string; price: number; needsAddress: boolean };
 export type Catalog = {

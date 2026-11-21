@@ -2,6 +2,21 @@ import mongoose, { Schema, type InferSchemaType } from "mongoose";
 
 // ------------------------------------------------------------------ users ---
 
+/** A saved delivery address (the reader's address book; filled in from their orders). */
+const savedAddressSchema = new Schema(
+  {
+    name: { type: String, required: true },
+    phone: { type: String, required: true },
+    line1: { type: String, required: true },
+    line2: String,
+    city: { type: String, required: true },
+    state: { type: String, required: true },
+    pincode: { type: String, required: true },
+    isDefault: { type: Boolean, default: false },
+  },
+  { timestamps: true },
+);
+
 const userSchema = new Schema(
   {
     /** Firebase Auth user ID (stable per Google account). */
@@ -15,6 +30,8 @@ const userSchema = new Schema(
     lastLoginAt: Date,
     /** Bookshelf: books the reader has marked as read. */
     readBooks: [{ _id: false, bookSlug: { type: String, required: true }, readAt: { type: Date, default: Date.now } }],
+    /** Address book: saved on the first order, picked at checkout after that. */
+    addresses: [savedAddressSchema],
   },
   { timestamps: true },
 );
@@ -57,7 +74,20 @@ const orderSchema = new Schema(
     shippingAddress: addressSchema,
 
     cashfree: {
+      /**
+       * The order_id we gave Cashfree: the code plus a random suffix (EZH-1001-k3x9q2), so it
+       * never clashes with an earlier order there even if the counter restarts or two
+       * databases share one Cashfree account. Older orders don't have it and used the code.
+       */
+      ref: { type: String, index: true, sparse: true },
+      /** Cashfree's own internal ID for the order (cf_order_id). */
       orderId: String,
+      /**
+       * The latest payment attempt on an order that isn't paid yet. A failed attempt doesn't
+       * fail the order (Cashfree keeps it open so the customer can retry); this lets the order
+       * page say "your payment didn't go through" instead of "waiting for payment".
+       */
+      lastAttempt: { paymentId: String, status: String, message: String, at: Date },
       paymentSessionId: String,
       paymentId: String,
       paymentMethod: String,

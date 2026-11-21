@@ -19,6 +19,8 @@ type CashfreePayment = {
   payment_status: "SUCCESS" | "NOT_ATTEMPTED" | "FAILED" | "USER_DROPPED" | "VOID" | "CANCELLED" | "PENDING";
   payment_group?: string;
   payment_amount?: number;
+  payment_message?: string;
+  payment_time?: string;
 };
 
 async function call<T>(method: "GET" | "POST", path: string, body?: unknown): Promise<T> {
@@ -37,16 +39,30 @@ async function call<T>(method: "GET" | "POST", path: string, body?: unknown): Pr
   return data;
 }
 
-/** Indian mobile number as the 10 digits Cashfree expects, or null if it isn't one. */
+/**
+ * A phone number in the form we store and send to Cashfree, or null if it isn't valid:
+ * - Indian mobiles as the plain 10 digits Cashfree expects ("9876543210"), whether typed as
+ *   "+91 98765 43210", "098765 43210" or "9876543210".
+ * - Other countries in international form ("+447911123456"). Cashfree's customer_phone is
+ *   10 digits, but "prefixed with a '+'" it accepts longer international numbers.
+ */
 export function normalizePhone(input: string) {
-  let digits = input.replace(/\D/g, "");
+  const trimmed = input.trim();
+  let digits = trimmed.replace(/\D/g, "");
+  if (trimmed.startsWith("+") && !digits.startsWith("91")) {
+    // E.164: country code + number, 8 to 15 digits in all.
+    return /^[1-9]\d{7,14}$/.test(digits) ? `+${digits}` : null;
+  }
   if (digits.length === 12 && digits.startsWith("91")) digits = digits.slice(2);
   if (digits.length === 11 && digits.startsWith("0")) digits = digits.slice(1);
   return /^[6-9]\d{9}$/.test(digits) ? digits : null;
 }
 
 export function createOrder(input: {
+  /** Cashfree's order_id: unique for every attempt (see `cashfree.ref` in models.ts). */
   orderId: string;
+  /** Our public order code, for the return page URL. */
+  code: string;
   amount: number;
   customer: { id: string; name: string; email: string; phone: string };
   note?: string;
@@ -55,7 +71,8 @@ export function createOrder(input: {
     order_id: input.orderId,
     order_amount: input.amount,
     order_currency: "INR",
-    order_note: input.note,
+    // Cashfree allows 3–200 characters; a long title must not make the whole order fail.
+    order_note: input.note && input.note.length >= 3 ? [...input.note].slice(0, 200).join("") : undefined,
     customer_details: {
       customer_id: input.customer.id,
       customer_name: input.customer.name,
@@ -64,7 +81,7 @@ export function createOrder(input: {
     },
     order_meta: {
       // Cashfree redirects here (GET) after success, failure or cancel.
-      return_url: `${env.SITE_URL}/orders/${encodeURIComponent(input.orderId)}`,
+      return_url: `${env.SITE_URL}/orders/${encodeURIComponent(input.code)}`,
       // Webhook; must be https, so only sent when this server is publicly reachable.
       ...(env.PUBLIC_URL.startsWith("https://") && { notify_url: `${env.PUBLIC_URL}/webhooks/cashfree` }),
     },

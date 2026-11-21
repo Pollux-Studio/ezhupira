@@ -2,26 +2,27 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { BookOpenCheck, LibraryBig, LogOut, MessageSquareText, Package, ShoppingBag } from "lucide-react";
+import { BookOpenCheck, LibraryBig, LogOut, MapPin, MessageSquareText, Package, ShoppingBag } from "lucide-react";
 import { useEffect, useState, useSyncExternalStore, type ReactNode } from "react";
 import { useSession } from "@/components/auth/session";
 import { BookCover, MallikaiText } from "@/components/book/book-parts";
 import { OrderList } from "@/components/orders/order-list";
 import { StatusBadge, formatDate } from "@/components/orders/order-status";
+import { AddressBook } from "@/components/profile/address-book";
 import { Bookshelf } from "@/components/profile/bookshelf";
 import { MyReviews } from "@/components/profile/my-reviews";
 import { PageNoise } from "@/components/page-noise";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UserAvatar } from "@/components/user-avatar";
-import { api, type MyReview, type Order, type ReadBook } from "@/lib/api";
-import type { Book } from "@/lib/books";
+import { api, type MyReview, type Order, type ReadBook, type SavedAddress } from "@/lib/api";
+import { isTestBook, openPreorder, type Book } from "@/lib/books";
 import { cn } from "@/lib/utils";
 
 /** Orders that count as owning the book. */
 const OWNED: Order["status"][] = ["paid", "shipped", "delivered"];
 
-const TABS = ["bookshelf", "purchased", "orders", "reviews"] as const;
+const TABS = ["bookshelf", "purchased", "orders", "reviews", "addresses"] as const;
 type Tab = (typeof TABS)[number];
 
 // The open tab lives in the URL hash (/profile#orders): it survives a reload, and Back
@@ -105,6 +106,7 @@ export function ProfilePage({ releaseLabel, books }: { releaseLabel: string; boo
   const [orders, setOrders] = useState<Order[] | null>(null);
   const [read, setRead] = useState<ReadBook[] | null>(null);
   const [reviews, setReviews] = useState<MyReview[] | null>(null);
+  const [addresses, setAddresses] = useState<SavedAddress[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useTab();
   const wide = useWide();
@@ -120,12 +122,14 @@ export function ProfilePage({ releaseLabel, books }: { releaseLabel: string; boo
       api<{ orders: Order[] }>("/orders/mine"),
       api<{ read: ReadBook[] }>("/me/shelf"),
       api<{ reviews: MyReview[] }>("/me/reviews"),
+      api<{ addresses: SavedAddress[] }>("/me/addresses"),
     ]).then(
-      ([o, s, r]) => {
+      ([o, s, r, a]) => {
         if (!active) return;
         setOrders(o.orders);
         setRead(s.read);
         setReviews(r.reviews);
+        setAddresses(a.addresses);
       },
       (err: Error) => active && setError(err.message),
     );
@@ -134,8 +138,8 @@ export function ProfilePage({ releaseLabel, books }: { releaseLabel: string; boo
     };
   }, [user]);
 
-  const shelfBooks = books.filter((b) => b.status === "published");
-  const preorderBook = books.find((b) => b.status === "upcoming" && b.preorderOpen);
+  const shelfBooks = books.filter((b) => b.status === "published" && !isTestBook(b));
+  const preorderBook = openPreorder(books);
   const owned = (orders ?? []).filter((o) => OWNED.includes(o.status));
   const readCount = read ? shelfBooks.filter((b) => read.some((r) => r.bookSlug === b.slug)).length : 0;
   const loading = !user || (!orders && !error);
@@ -186,31 +190,42 @@ export function ProfilePage({ releaseLabel, books }: { releaseLabel: string; boo
             <div className="h-72 animate-pulse border bg-muted" aria-label="Loading" />
           )}
 
-          {/* The menu: a vertical tab list on wide screens; on phones, four tabs side by side
+          {/* The menu: a vertical tab list on wide screens; on phones, five tabs side by side
               (icon over a short label) that always fit, no scrolling. */}
           <nav aria-label="Your library" className="border bg-background p-1.5 md:p-2">
             <TabsList
               variant="line"
               aria-label="Profile sections"
-              className="grid h-auto w-full grid-cols-4 gap-1 bg-transparent p-0 md:flex md:flex-col md:items-stretch"
+              // group-data-horizontal/tabs:h-auto: the shared TabsList fixes the bar at h-8 when
+              // horizontal, which the icon-over-label buttons below spill out of on phones.
+              className="grid h-auto w-full grid-cols-5 gap-1 bg-transparent p-0 group-data-horizontal/tabs:h-auto md:flex md:flex-col md:items-stretch"
             >
               {[
                 { value: "bookshelf", label: "Bookshelf", short: "Shelf", Icon: LibraryBig, count: read ? readCount : null },
                 { value: "purchased", label: "Purchased books", short: "Bought", Icon: ShoppingBag, count: orders ? owned.length : null },
                 { value: "orders", label: "Orders", short: "Orders", Icon: Package, count: orders?.length ?? null },
                 { value: "reviews", label: "Reviews", short: "Reviews", Icon: MessageSquareText, count: reviews?.length ?? null },
+                { value: "addresses", label: "Addresses", short: "Address", Icon: MapPin, count: addresses?.length ?? null },
               ].map(({ value, label, short, Icon, count }) => (
                 <TabsTrigger
                   key={value}
                   value={value}
                   className="h-auto min-w-0 flex-col gap-1 rounded-md px-1 py-2 text-xs font-medium after:hidden data-active:border-transparent! data-active:bg-primary! data-active:text-primary-foreground! md:h-11 md:w-full md:flex-row md:justify-start md:gap-3 md:px-3 md:py-0 md:text-sm"
                 >
-                  <Icon aria-hidden className="size-4" />
-                  <span className="flex min-w-0 items-center gap-1 md:flex-1">
+                  {/* On phones the count sits on the icon's corner, so five labels fit in a row. */}
+                  <span className="relative">
+                    <Icon aria-hidden className="size-4" />
+                    {count !== null && (
+                      <span className="absolute -top-1.5 -right-2.5 min-w-4 rounded-full bg-muted px-1 text-center text-[0.6rem] leading-4 tabular-nums text-muted-foreground md:hidden [[data-active]_&]:bg-primary-foreground [[data-active]_&]:text-primary">
+                        {count}
+                      </span>
+                    )}
+                  </span>
+                  <span className="flex min-w-0 max-w-full items-center gap-1 md:flex-1">
                     <span className="truncate md:hidden">{short}</span>
                     <span className="truncate max-md:hidden">{label}</span>
                     {count !== null && (
-                      <span className="min-w-5 rounded-full bg-muted px-1 text-center text-[0.65rem] tabular-nums text-muted-foreground md:ml-auto md:min-w-6 md:px-1.5 md:text-xs [[data-active]_&]:bg-primary-foreground/20 [[data-active]_&]:text-primary-foreground">
+                      <span className="ml-auto min-w-6 rounded-full bg-muted px-1.5 text-center text-xs tabular-nums text-muted-foreground max-md:hidden [[data-active]_&]:bg-primary-foreground/20 [[data-active]_&]:text-primary-foreground">
                         {count}
                       </span>
                     )}
@@ -273,7 +288,7 @@ export function ProfilePage({ releaseLabel, books }: { releaseLabel: string; boo
               }
             />
             {orders && orders.length > 0 ? (
-              <OrderList orders={orders} />
+              <OrderList orders={orders} books={books} />
             ) : orders ? (
               <Empty>No orders yet. When a book opens for pre-order, you&apos;ll find the button on its page.</Empty>
             ) : (
@@ -284,6 +299,11 @@ export function ProfilePage({ releaseLabel, books }: { releaseLabel: string; boo
           <TabsContent value="reviews" className="space-y-4 text-base">
             <PanelHeading icon={<MessageSquareText aria-hidden />} title="Your reviews" />
             {reviews ? <MyReviews reviews={reviews} onChange={setReviews} books={books} /> : <div className="h-28 animate-pulse rounded-lg bg-muted" />}
+          </TabsContent>
+
+          <TabsContent value="addresses" className="space-y-4 text-base">
+            <PanelHeading icon={<MapPin aria-hidden />} title="Saved addresses" />
+            {addresses ? <AddressBook addresses={addresses} onChange={setAddresses} /> : <div className="h-28 animate-pulse rounded-lg bg-muted" />}
           </TabsContent>
         </div>
       </Tabs>

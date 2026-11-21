@@ -17,7 +17,7 @@ export async function generateStaticParams() {
 export async function generateMetadata({ params }: PageProps<"/books/[slug]/preorder">): Promise<Metadata> {
   const book = await getBook((await params).slug);
   return {
-    title: book ? `Pre-order ${book.title}` : "Pre-order",
+    title: book ? `${book.status === "upcoming" ? "Pre-order" : "Buy"} ${book.title}` : "Pre-order",
     robots: { index: false, follow: true },
   };
 }
@@ -55,7 +55,7 @@ export default async function PreorderPage({ params }: PageProps<"/books/[slug]/
           </div>
         </aside>
         <div className="min-w-0">
-          <PreorderCheckout bookSlug={book.slug} />
+          <PreorderCheckout bookSlug={book.slug} released={book.status !== "upcoming"} />
         </div>
       </main>
       </div>
